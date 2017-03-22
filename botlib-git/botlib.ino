@@ -152,7 +152,8 @@ int step_length;
 int rotation_length;
 
 /* Distance wanted */
-volatile unsigned int distance_wanted;
+volatile unsigned int distance_wanted_left;
+volatile unsigned int distance_wanted_right;
 
 /* Motor speed in steps per interval */
 int motor_speed_steps;
@@ -162,8 +163,8 @@ double pwm_motor_speed_left;
 double pwm_motor_speed_right;
 
 /* Distance read by each motor */
-volatile uint32_t steps_reach_motor_left;
-volatile uint32_t steps_reach_motor_right;
+volatile int steps_reach_motor_left;
+volatile int steps_reach_motor_right;
 
 /* Number of steps completed */
 volatile uint8_t steps_motor_left;
@@ -285,7 +286,8 @@ void setup(){
   motor_speed_steps = 0;
 
   /* Initialize distance wanted by user */
-  distance_wanted = 0;
+  distance_wanted_left = 0;
+  distance_wanted_right = 0;
   
   /* Initialize distance rech by each motor */
   steps_reach_motor_left = 0;
@@ -405,9 +407,9 @@ void loop(){
   /* Move 1000mm */
   moveAhead(1000);
   //while(true);
+  //delay(30000);
   delay(30000);
   brake();
-  delay(30000);
 }
 
 /* :::::::::::::::::::       Helpers       ::::::::::::::::::: */
@@ -417,16 +419,12 @@ void stepCounterMotorLeft(){
   /* Number of steps performed by motor left */
   steps_motor_left++;  
   /* Number of steps as input for PID */
-  input_steps_motor_left++;
+  input_steps_motor_left += 1;
   /* Total number of steps reached by motor left */
   steps_reach_motor_left++;
   
   /* Brake motors if we had reached the distance wanted */
-  if(steps_reach_motor_left >= distance_wanted){
-    #if defined(ENABLE_LOG) && defined(LAZY_DEBUG)
-    printDebugn("Stopped Motor Right");
-    #endif
-    
+  if(steps_reach_motor_left >= distance_wanted_left){
     /* Brake this motor */
     brakeMotor(MOTOR_LEFT);
     /* Zero speed of pwm output */
@@ -435,6 +433,12 @@ void stepCounterMotorLeft(){
     setpoint_steps_speed_left = 0;
     /* Zero number of steps reach by this motor */
     steps_reach_motor_right = 0;
+    /* Zero distance Wanted */
+    distance_wanted_left = 0;
+
+    #if defined(ENABLE_LOG) && defined(LAZY_DEBUG)
+    printDebugn("Stopped Motor Left");
+    #endif
   }
 
     /* Increase rotation if we had completed one */
@@ -457,12 +461,12 @@ void stepCounterMotorRight(){
   /* Number of steps performed by motor right */
   steps_motor_right++;
   /* Number of steps as input for PID */
-  input_steps_motor_right++;
+  input_steps_motor_right += 1;
   /* Total number of steps reached by motor right */
   steps_reach_motor_right++;
 
   /* Brake motor right if we had reached the distance wanted */
-  if(steps_reach_motor_right >= distance_wanted){  
+  if(steps_reach_motor_right >= distance_wanted_right){  
     /* Brake this motor */
     brakeMotor(MOTOR_RIGHT);
     /* Zero speed of pwm output */
@@ -473,7 +477,9 @@ void stepCounterMotorRight(){
     steps_reach_motor_right = 0;
     /* Remove mutex */
     routine_flag_mutex_lock_right = false;
-
+    /* Zero distance Wanted */
+    distance_wanted_right = 0;
+    
     #if defined(ENABLE_LOG) && defined(LAZY_DEBUG)
     printDebugn("Stopped Motor Right");
     #endif
@@ -503,6 +509,14 @@ void adjustMotors(){
   /* Adjust pwm output of each motor */
   analogWrite(SPEED_MOTOR_LEFT, pwm_motor_speed_left);
   analogWrite(SPEED_MOTOR_RIGHT, pwm_motor_speed_right);
+
+  #ifdef ENABLE_LOG
+  printLog("PWM (L|R) (");
+  printLogVar(ceil(pwm_motor_speed_left));
+  printMem(" | ");
+  printLogVar(ceil(pwm_motor_speed_right));
+  printMemn(" )");
+  #endif
 }
 
 /* Move robot to an specific angle */
@@ -515,15 +529,18 @@ void rotateRobot(int16_t desired_angle){
   else{
     turnLeft();
   }
+  unsigned int distance_wanted;
 
   /* While we wanted a rotation greater than 360, we increase distance wanted by number of steps */
   while(desired_angle >= 180){
-    distance_wanted += ENCODER_STEPS / 2;
+    distance_wanted += ceil(rotation_length/(step_length*2));
     desired_angle -= 180;
   }
-
+ 
   /* Now we calc the wanted distance, and to ensure precision distance is defined in steps */
-  distance_wanted = ceil((double) desired_angle / step_angle);
+  distance_wanted += ceil((desired_angle * PI * (ROBOT_WIDTH_MM / 2.0)) / 180.0);
+  distance_wanted_left = distance_wanted;
+  distance_wanted_right = distance_wanted;
 
   /* Start motor parallel aceleration */
   parallelAceleration();
@@ -541,15 +558,20 @@ void moveAhead(int distance){
   }
   
   /* Now we calc the wanted distance, and to ensure precision distance is defined in steps */
-  distance_wanted = ceil((double) abs(distance) / step_length);
+  unsigned int distance_wanted = ceil((double) abs(distance) / step_length);
+  distance_wanted_left = distance_wanted;
+  distance_wanted_right = distance_wanted;
+  
+  /* Lock Mutex */
+  routine_flag_mutex_lock_left = true;
+  routine_flag_mutex_lock_right = true;
 
   /* Start motor parallel aceleration */
   parallelAceleration();
-  
+
   /* Wait until it finishes the thread */
-  routine_flag_mutex_lock_left = true;
-  routine_flag_mutex_lock_right = true;
   await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
+  //await(routine_flag_mutex_lock_left);
 }
 
 /* Parallel aceleratio of wheels */
@@ -779,7 +801,9 @@ void dumpInfo(){
   printMem("Rotation Length = ");
   printLogVarn(rotation_length);
   printMem("Distance Wanted = ");
-  printLogVarn(distance_wanted);
+  printLogVar(distance_wanted_left);
+  printMem(" ");
+  printLogVarn(distance_wanted_right);
   printMem("Distance Reach Motor Left = ");
   printLogVarn(steps_reach_motor_left);
   printMem("Distance Reach Motor Right = ");
@@ -802,4 +826,3 @@ void dumpInfo(){
   printLogVarn(routine_flag_mutex_lock_right);
 }
 #endif
-
