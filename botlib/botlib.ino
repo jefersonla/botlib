@@ -46,7 +46,7 @@
  *
  * modified 21 Mar 2017
  * by Jeferson Lima(@jefersonla)<jefersonlimaa@dcc.ufba.br> 
- * and Andressa Andrade(@dsandrade)<emaildedessa@hotmail.com>
+ * and Andressa Andrade(@AndressAndrade)<dsandrade@dcc.ufba.br>
  */
 
 /* Libraries Used */
