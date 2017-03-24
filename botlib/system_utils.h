@@ -14,7 +14,7 @@
 /* Motor Speed and Adjust interval */
 
 /* Step speed */
-#define STEP_SPEED 20
+#define STEP_SPEED 40
 
 /* Step speed interval by seconds */
 #define ADJUST_MOTOR_INTERVAL 4

@@ -78,7 +78,7 @@
 //#define SOFTWARE_SERIAL_LOG
 
 /* Enable display of lazy debug. Please don't use this on normal conditions */
-#define LAZY_DEBUG
+//#define LAZY_DEBUG
 
 /* Enable use of old and deprecated functions */
 //#define USE_OBSOLETE
@@ -404,12 +404,18 @@ void loop(){
   readSerialData();
 #endif
 
-  /* Move 1000mm */
+  /* Move 1000mm - 100cm - 1m */
   moveAhead(1000);
   //while(true);
   //delay(30000);
-  delay(30000);
+  //unsigned int distance_wanted = ceil((double) abs(1000) / step_length);
+  //distance_wanted_left = distance_wanted;
+  //distance_wanted_right = distance_wanted;
+  //turnForward();
+  //acelerateMotors(80);
+  delay(10000);
   brake();
+  delay(5000);
 }
 
 /* :::::::::::::::::::       Helpers       ::::::::::::::::::: */
@@ -432,11 +438,13 @@ void stepCounterMotorLeft(){
     /* And set the speed wanted to 0 (fading stop) */
     setpoint_steps_speed_left = 0;
     /* Zero number of steps reach by this motor */
-    steps_reach_motor_right = 0;
+    steps_reach_motor_left = 0;
+    /* Remove mutex */
+    routine_flag_mutex_lock_left = false;
     /* Zero distance Wanted */
     distance_wanted_left = 0;
 
-    #if defined(ENABLE_LOG) && defined(LAZY_DEBUG)
+    #ifdef ENABLE_LOG
     printDebugn("Stopped Motor Left");
     #endif
   }
@@ -480,7 +488,7 @@ void stepCounterMotorRight(){
     /* Zero distance Wanted */
     distance_wanted_right = 0;
     
-    #if defined(ENABLE_LOG) && defined(LAZY_DEBUG)
+    #ifdef ENABLE_LOG
     printDebugn("Stopped Motor Right");
     #endif
   }
@@ -509,6 +517,10 @@ void adjustMotors(){
   /* Adjust pwm output of each motor */
   analogWrite(SPEED_MOTOR_LEFT, pwm_motor_speed_left);
   analogWrite(SPEED_MOTOR_RIGHT, pwm_motor_speed_right);
+
+  /* Clean values for next interation */
+  input_steps_motor_left = 0;
+  input_steps_motor_right = 0;
 
   #ifdef ENABLE_LOG
   printLog("PWM (L|R) (");
@@ -571,7 +583,6 @@ void moveAhead(int distance){
 
   /* Wait until it finishes the thread */
   await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
-  //await(routine_flag_mutex_lock_left);
 }
 
 /* Parallel aceleratio of wheels */
