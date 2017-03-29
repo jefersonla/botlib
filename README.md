@@ -1,5 +1,5 @@
-# BotLib
-## Robot base sketch to deal with chinese robots
+# Robozino
+### Robot base sketch to deal with chinese robots
 ---
 
 ### Introduction
