@@ -280,6 +280,8 @@ void setup(){
   fastPinMode(IN2_MOTOR_RIGHT, OUTPUT);
   fastPinMode(SPEED_MOTOR_LEFT, OUTPUT);
   fastPinMode(SPEED_MOTOR_RIGHT, OUTPUT);
+  fastPinMode(REGISTER_LOCK_MOTOR_LEFT, OUTPUT);
+  fastPinMode(REGISTER_LOCK_MOTOR_RIGHT, OUTPUT);
 
   /* Configure Interruption pins as INPUT with internal PULLUP ressitors */
   pinMode(ENCODER_LEFT_PIN, INPUT_PULLUP);
@@ -329,7 +331,9 @@ void setup(){
 
   /* Blocking mutex */
   routine_flag_mutex_lock_left = false;
+  fastDigitalWrite(REGISTER_LOCK_MOTOR_LEFT, LOW);
   routine_flag_mutex_lock_right = false;
+  fastDigitalWrite(REGISTER_LOCK_MOTOR_RIGHT, LOW);
   
   #ifdef ENABLE_LOG
   /* Initialized all variables */
@@ -448,16 +452,20 @@ void stepCounterMotorLeft(){
   if(steps_reach_motor_left >= distance_wanted_left){
     /* Remove mutex */
     routine_flag_mutex_lock_left = false;
+    fastDigitalWrite(REGISTER_LOCK_MOTOR_LEFT, LOW);
     /* Disable motor left */
     motor_left_enabled = false;
     /* Brake this motor */
     brakeMotor(MOTOR_LEFT);
+    //turnReverseMotor(MOTOR_LEFT);
+    //acelerateMotor(MOTOR_LEFT, REGISTER_LOCK_MOTOR_RIGHT);
     /* Zero number of steps reach by this motor */
     steps_reach_motor_left = 0;
     /* Zero distance Wanted */
     distance_wanted_left = 0;
     /* Zero PWM Speed */
-    pwm_motor_speed_left = 0;
+    //pwm_motor_speed_left = 0;
+    setpoint_steps_speed_left = 0;
 
     #ifdef ENABLE_LOG
     //printDebugn("Stopped Motor Left");
@@ -484,16 +492,20 @@ void stepCounterMotorRight(){
   if(steps_reach_motor_right >= distance_wanted_right){  
     /* Remove mutex */
     routine_flag_mutex_lock_right = false;
+    fastDigitalWrite(REGISTER_LOCK_MOTOR_RIGHT, LOW);
     /* Disable motor right */
     motor_right_enabled = false;
     /* Brake this motor */
     brakeMotor(MOTOR_RIGHT);
+    //turnReverseMotor(MOTOR_RIGHT);
+    //acelerateMotor(MOTOR_RIGHT, REGISTER_LOCK_MOTOR_RIGHT);
     /* Zero number of steps reach by this motor */
     steps_reach_motor_right = 0;
     /* Zero distance Wanted */
     distance_wanted_right = 0;
     /* Zero PWM Speed */
-    pwm_motor_speed_right = 0;
+    //pwm_motor_speed_right = 0;
+    setpoint_steps_speed_left = 0;
     
     #ifdef ENABLE_LOG
     //printDebugn("Stopped Motor Right");
@@ -583,8 +595,23 @@ void rotateRobot(int16_t desired_angle){
   /* Start motor parallel aceleration */
   parallelAceleration();
   
+  /* Lock Mutex */
+  routine_flag_mutex_lock_left = true;
+  digitalWrite(REGISTER_LOCK_MOTOR_LEFT, HIGH);
+  routine_flag_mutex_lock_right = true;
+  digitalWrite(REGISTER_LOCK_MOTOR_RIGHT, HIGH);
+  delay(50);
+  
   /* Wait until it finishes the thread */
-  await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
+  //await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
+  Serial.println("STARTOU");
+  //await(fastDigitalRead(REGISTER_LOCK_MOTOR_LEFT) || fastDigitalRead(REGISTER_LOCK_MOTOR_RIGHT));
+  while(digitalRead(REGISTER_LOCK_MOTOR_LEFT) || digitalRead(REGISTER_LOCK_MOTOR_RIGHT)){
+    delay(100);
+  }
+  delay(1000);
+  Serial.println("FINALIZOU GG");
+  brake();
 }
 
 /* Move ahead for some distance, if distance is negative move reverse */
@@ -605,7 +632,10 @@ void moveAhead(int distance){
   
   /* Lock Mutex */
   routine_flag_mutex_lock_left = true;
+  digitalWrite(REGISTER_LOCK_MOTOR_LEFT, HIGH);
   routine_flag_mutex_lock_right = true;
+  digitalWrite(REGISTER_LOCK_MOTOR_RIGHT, HIGH);
+  delay(50);
 
   /* Start motor parallel aceleration */
   parallelAceleration();
@@ -614,9 +644,11 @@ void moveAhead(int distance){
 
   /* Wait until it finishes the thread */
   //await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
-  while(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right){
-    delay(50);
+  //while(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right){
+  while(digitalRead(REGISTER_LOCK_MOTOR_LEFT) || digitalRead(REGISTER_LOCK_MOTOR_RIGHT)){
+    delay(100);
   }
+  delay(1000);
   Serial.println("FINALIZOU 3");
   brake();
 }
@@ -867,19 +899,11 @@ void dumpInfo(){
 }
 #endif
 
-
-
-
-
-
-
 //////////////////////////
-
-
 
 /* Define your libraries and variables here */
 #define n 3
-#define a   25//(n * 15)
+#define a   25//(n * REGISTER_LOCK_MOTOR_RIGHT)
 #define m   (n + 2)
 
 static int grid[m][m];
@@ -1007,6 +1031,7 @@ void goBackward(){
 void turn_Left(){
   Serial.println("Movendo para esquerda...");
   rotateRobot(-90);
+  moveAhead(-400);
   //Turn robot left *doesn't mean change matriz position, move robot 90º on his atual position
   //goForward()     *go to other position on the grid
   //Turn robot right
@@ -1023,7 +1048,7 @@ void turn_Right(){
 //Just change the robot orientation
 void turnAround(){
   Serial.println("Girando...");
-  rotateRobot(180);
+  rotateRobot(90);
   //Turn robot right
 }
 

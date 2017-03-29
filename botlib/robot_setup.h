@@ -27,6 +27,10 @@
 #define SOFTWARE_SERIAL_TX_PIN  11
 #define SOFTWARE_SERIAL_RX_PIN  12
 
+/* Mutex Lock Motor */
+#define REGISTER_LOCK_MOTOR_LEFT 12
+#define REGISTER_LOCK_MOTOR_RIGHT 13
+
 /* Define the pins of the Ultrasonic Sensors */
 #define TRIGGER_PIN       14
 #define ECHO_PIN_LEFT     15
