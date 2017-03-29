@@ -65,7 +65,9 @@
 #include "system_utils.h"
 
 /* User Code */
-#include "user.c"
+extern void userSetup();
+extern void userLoop();
+#include "user.cpp"
 
 /***** USER CONFIG *****/
 
@@ -641,11 +643,6 @@ void parallelAcelerationMotor(int motor_num){
   }
 }
 
-/* Check Obstacles */
-void checkObstacles(){
-  // TODO
-}
-
 /* Read Serial data */
 #ifdef SERIAL_CONTROL_ENABLED
 void readSerialData(){
@@ -869,3 +866,425 @@ void dumpInfo(){
   printLogVarn(routine_flag_mutex_lock_right);
 }
 #endif
+
+
+
+
+
+
+
+//////////////////////////
+
+
+
+/* Define your libraries and variables here */
+#define n 3
+#define a   25//(n * 15)
+#define m   (n + 2)
+
+static int grid[m][m];
+static int heuristic[n][n];
+
+/* MAKE IT STOP */
+static int fim = 0;           
+static int counter = 0;       
+
+/* Define Goal */
+static int GoalRow = 1;
+static int GoalCol = 3;
+
+/* Define Actual Point */
+static int ActualRow;
+static int ActualCol;
+
+/* Define Next Point */
+static int NextRow;
+static int NextCol;
+
+
+/* Define StartPoint */
+static int StartRow = 3;
+static int StartCol = 1;
+
+/* Function g(n) - Cost */
+static int ort = 10;      // Define ortogonal's(up, down, left, right) cost as 10
+static int obstacle = 1000; //Define obstacle
+
+/* Variables */
+static int i;
+static int j;
+static int z;//Indice utilizado nos vetores path
+static int p;
+static int pathRow[a];
+static int pathCol[a];
+static int finalRow[m];
+static int finalCol[m];
+
+void intervencao(){
+  for(i = 0; i < m; i++){
+      for(j = 0; j < m; j++){
+         Serial.println(grid[i][j]);
+         fim = 1;
+      }
+   }
+}
+
+/* Define your code here */
+void printpath(){
+  Serial.println("Este eh ao caminho percorrido ate aqui:");
+  for(i = 0; i < z; i++){
+    Serial.print(pathRow[i]);
+    Serial.print(" ");
+    Serial.println(pathCol[i]);
+  }
+}
+
+void printheuristic(){
+  Serial.println("Este eh a heuristica do labirinto, resolvido por Manhanttan:");
+  for(i = 0; i < n; i++){
+    for(j = 0; j < n; j++){
+      Serial.print(heuristic[i][j]);
+      Serial.print("  ");
+    }
+    Serial.print("\n");
+  }  
+}
+
+void printgrid(){
+  Serial.println("Este eh o grid do labirinto, resolvido por A*:");
+  for(i = 0; i < m; i++){
+    for(j = 0; j < m; j++){
+      Serial.print(grid[i][j]);
+      Serial.print("  ");
+    }
+    Serial.print("\n");
+  }  
+}
+
+boolean isFim(){
+  Serial.println("Verificando se eh o fim...");
+  //This funcion will see if we reach the goal
+  //if ActualPoint is equal GoalPoint
+  if(ActualRow == GoalRow && ActualCol == GoalCol){
+    fim = 1;
+    return true; 
+  }
+  else{
+    return false;
+  }
+}
+
+/* PD Functions - Make the Robot drive straight*/
+
+/* Obstacles Detector Functions */
+
+boolean isObstacle(int x, int y){
+  Serial.println("Verificando obstaculos...");
+  //This funcion will see if there is a object on a point in the matrix that is a obstacles
+  if (x == 0 or y == 0 or x == 4 or y == 4){
+    return true;
+  }
+  else{
+    return false;
+  }
+}
+
+/* Robot Moviments Functions */
+
+//This follows moviments has as function, besides move the robot aroud the grid, make the robo orientation be always to the North, this can make it easier to move the robot 
+void goForward(){
+  Serial.println("Movendo para frente...");
+  moveAhead(400);
+  //Move robot forward
+}
+
+void goBackward(){
+  Serial.println("Movendo para tras...");
+  moveAhead(-400);
+  //Move robot backward
+}
+
+void turn_Left(){
+  Serial.println("Movendo para esquerda...");
+  rotateRobot(-90);
+  //Turn robot left *doesn't mean change matriz position, move robot 90º on his atual position
+  //goForward()     *go to other position on the grid
+  //Turn robot right
+}
+
+void turn_Right(){
+  Serial.println("Movendo para direita...");
+  rotateRobot(90);
+  //Turn robot right 
+  //goForward()     
+  //Turn robot left
+}
+
+//Just change the robot orientation
+void turnAround(){
+  Serial.println("Girando...");
+  rotateRobot(180);
+  //Turn robot right
+}
+
+
+/* A Star Functions */
+
+int aux1;
+int aux2;
+
+void setGrid(int x, int y){
+  Serial.println("Calculando heuristica mais custo...");
+  int q = x;
+  int r = y;
+  if (isObstacle(q, r)){
+    if (q >= 0 && r >= 0){
+      grid[x][y] = obstacle;
+      return;
+    }
+  }
+  if (grid[x][y] == 2000){
+      return;
+  }
+  else{
+      grid[x][y] = 0;
+      grid[x][y] = 10 + heuristic[x-1][y-1];
+      // NAO
+      //int w = z;
+      //while(pathRow[w] != StartRow && pathCol[w] != StartCol){
+     //   grid[x][y] += heuristic[pathRow[w-1]][pathCol[w-1]];
+      //  w -= 1;
+     // }
+     // NAO
+     Serial.print("Este eh meu indice Z: ");
+     Serial.println(z);
+     p = z-1;
+     int lock2 = 1;
+     printpath();
+     while(lock2){
+      if(pathRow[p] == StartRow && pathCol[p] == StartCol){
+        lock2 = 0;  
+      }
+      else{  
+        /*Serial.print(pathRow[p]);
+        Serial.print("  ");
+        Serial.println(pathCol[p]);*/
+        grid[x][y] += heuristic[pathRow[p]-1][pathCol[p]-1];
+        p-=1;
+      }  
+    }
+  }
+}
+
+/* Function h(n) - Define Heuristic using Manhattan Distance*/
+void heuristicFunction(){
+  Serial.println("Calculando matriz heuristica...");
+  for(i = 0; i < n; i++){
+    for(j = 0; j < n; j++){
+      aux1 = abs(i - (GoalRow-1));
+      aux2 = abs(j - (GoalCol-1));
+      aux1 = aux1 + aux2;
+      heuristic[i][j] = aux1;
+      /*
+      Serial.print("heuristic[");
+      Serial.print(i);
+      Serial.print("][");
+      Serial.print(j);
+      Serial.print("] = ");
+      Serial.println(heuristic[i][j]);
+      */
+    }
+  }  
+}
+
+/* Function f(n) = g(n) + h(n) */
+void a_star(){
+  Serial.println("Aplicando A* em meus vizinhos...");
+  /*
+  int StartRow = 3;
+  int StartCol = 1;
+  I need o check all around, but skip previous calculate...
+  */
+  //Seta o grid como 2000 para evitar loop infinito
+  grid[ActualRow][ActualCol] = 2000;
+   
+  //Fist test forward (forward is -1 of the ActualPosition Row)
+  setGrid(ActualRow-1,ActualCol);
+  //Then test right (right is +1 of the ActualPosition Col)
+  turnAround();
+  setGrid(ActualRow,ActualCol+1);
+  //Then test backward (backward is +1 of the ActualPosition Row)
+  turnAround();
+  setGrid(ActualRow+1,ActualCol);
+  //Then test left (left is -1 of the ActualPosition Col),
+  turnAround();
+  setGrid(ActualRow,ActualCol-1);
+  //Finally turn back to Origin orientation
+  turnAround();
+}
+
+void findPath(){
+  Serial.println("Definindo rota...");
+  p = z - 1;
+  int padrao = 1000;
+  for(i = 1; i < m; i++){
+    for(j = 1; j < m; j++){
+       if(grid[i][j] < padrao){
+        NextRow = i;
+        NextCol = j;
+        //Serial.print(NextRow);
+        //Serial.println(NextCol);
+        padrao = grid[i][j];
+       }
+    }
+  }
+}
+
+void goAhead(){
+  Serial.println("Indo para proxima posicao...");
+  Serial.print("Linha: ");
+  Serial.print(NextRow);
+  Serial.print(" Coluna: ");
+  Serial.println(NextCol);
+  /*É necessario se posicionar neste novo grid */
+  //Verifico se próxima posição é um vizinho
+  if(ActualRow == NextRow){  //Se for,  eles estão na mesma linha, devo left ou right
+    while(ActualCol != NextCol){   
+      if(ActualCol < NextCol){
+        turn_Right();
+        ActualRow = NextRow;
+        ActualCol +=1;
+      }
+      else{
+        turn_Left(); 
+        ActualRow = NextRow;
+        ActualCol -= 1;
+      }
+      pathRow[z] = ActualRow;
+      pathCol[z] = ActualCol;
+      z += 1;
+    }  
+    return;
+  }
+  if(ActualCol == NextCol){  //Se for, eles estão na mesma coluna, devo forward ou backward
+     while(ActualRow != NextRow){ 
+      if(ActualRow < NextRow){// turn right
+        goBackward();
+        ActualRow += 1;
+        ActualCol = NextCol;
+      }
+      else{
+        goForward();
+        ActualRow -= 1;
+        ActualCol = NextCol;
+      }
+      pathRow[z] = ActualRow;
+      pathCol[z] = ActualCol;
+      z += 1;
+    } 
+    return;
+  }
+  //Caso não seja vizinho, devo regredir no grid, retrocendendo na lista percorrida até alcançar um vizinho,
+  Serial.println("Nao e vizinho.............................");
+  p -= 1;
+  if(ActualRow == pathRow[p]){ //Se for,  eles estão na mesma linha, devo left ou right
+     if(ActualCol < pathCol[p]){
+      turn_Right();
+     }
+     else{
+      turn_Left(); 
+     }
+     ActualRow = pathRow[p];
+     ActualCol = pathCol[p];
+     pathRow[z] = ActualRow;
+     pathCol[z] = ActualCol;
+     z += 1;
+     goAhead();
+  }
+  if(ActualCol == pathCol[p]){  //Se for, eles estão na mesma coluna, devo forward ou backward
+     if(ActualRow < pathRow[p]){// turn right
+      goBackward();
+     }
+     else{
+      goForward();
+     }
+     ActualRow = pathRow[p];
+     ActualCol = pathCol[p];
+     pathRow[z] = ActualRow;
+     pathCol[z] = ActualCol;
+     z += 1;
+     goAhead();
+  }
+  goAhead(); //?
+}
+
+void defineWay(){
+  p = z;
+  int lock = 1;
+  Serial.println("Imprimindo caminho final...");
+  while(lock){
+    if(pathRow[p] == StartRow && pathCol[p] == StartCol){
+      lock = 0;  
+    }
+    else{  
+      counter++;
+      p--;
+    }  
+  }
+  for(i = 0; i < counter; i++){
+    finalRow[i] = pathRow[p];
+    finalCol[i] = pathCol[p];
+    Serial.print("Passo ");
+    Serial.print(i+1);
+    Serial.print(" ");
+    Serial.print(pathRow[p]);
+    Serial.print(" ");
+    Serial.println(pathCol[p]);
+    p++;
+  }
+}
+
+/********************************/
+/* Don't remove these functions */
+/********************************/
+
+void userSetup(){
+  /* Define your own setup routine here */ 
+  heuristicFunction();
+  ActualRow = StartRow;
+  ActualCol = StartCol;
+
+  pathRow[0] = StartRow;
+  pathCol[0] = StartCol;
+  z = 1;
+  
+  for(i = 0; i < m; i++){
+    for(j = 0; j < m; j++){
+      grid[i][j] = 1000;
+    }
+  }
+}
+
+void userLoop(){
+  /* Define your own loop routine here */ 
+  delay(1000);
+  if(!fim){
+    a_star();
+    delay(1000);
+    findPath();
+    delay(1000);
+    goAhead();
+    delay(1000);
+    printgrid();
+    printheuristic();
+    delay(1000);
+    if(isFim()){
+       defineWay();
+       delay(10000);
+    }
+    delay(2000);
+
+  }
+
+  Serial.println("Fim do loop!");
+}
