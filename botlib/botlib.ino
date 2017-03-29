@@ -50,6 +50,7 @@
  */
 
 /* Libraries Used */
+#include "pid.c"
 #include <math.h>
 #include <stdint.h>
 #include <PID_v1.h>
@@ -159,24 +160,24 @@ volatile unsigned int distance_wanted_right;
 int motor_speed_steps;
 
 /* Pwm speed for each motor */
-double pwm_motor_speed_left;
-double pwm_motor_speed_right;
+//volatile double pwm_motor_speed_left;
+//volatile double pwm_motor_speed_right;
+volatile int pwm_motor_speed_left;
+volatile int pwm_motor_speed_right;
 
 /* Distance read by each motor */
-volatile int steps_reach_motor_left;
-volatile int steps_reach_motor_right;
+volatile unsigned int steps_reach_motor_left;
+volatile unsigned int steps_reach_motor_right;
 
-/* Number of steps completed */
-volatile uint8_t steps_motor_left;
-volatile uint8_t steps_motor_right;
-
-/* Number of rotations completed */
-volatile unsigned long rotations_motor_left;
-volatile unsigned long rotations_motor_right;
+/* Enable movement of each motor */
+volatile bool motor_left_enabled;
+volatile bool motor_right_enabled;
 
 /* Number of ticks on each motor, used to tune adjust */
-double input_steps_motor_left;
-double input_steps_motor_right;
+//volatile double input_steps_motor_left;
+//volatile double input_steps_motor_right;
+volatile int steps_motor_left;
+volatile int steps_motor_right;
 
 /* Routine Flag Lock */
 mutex routine_flag_mutex_lock_left;
@@ -186,14 +187,21 @@ mutex routine_flag_mutex_lock_right;
 volatile double pid_kp = DEFAULT_KP;
 volatile double pid_ki = DEFAULT_KI;
 volatile double pid_kd = DEFAULT_KD;
+//volatile uint16_t pid_kp = DEFAULT_KP;
+//volatile uint16_t pid_ki = DEFAULT_KI;
+//volatile uint16_t pid_kd = DEFAULT_KD;
 
 /* PID Speed wanted */
-double setpoint_steps_speed_left = 0;
-double setpoint_steps_speed_right = 0;
+//volatile double setpoint_steps_speed_left = 0;
+//volatile double setpoint_steps_speed_right = 0;
+volatile int setpoint_steps_speed_left;
+volatile int setpoint_steps_speed_right;
 
 /* PID Object */
-PID motor_left_pid(&input_steps_motor_left, &pwm_motor_speed_left, &setpoint_steps_speed_left, DEFAULT_KP, DEFAULT_KI, DEFAULT_KD, DIRECT);
-PID motor_right_pid(&input_steps_motor_right, &pwm_motor_speed_right, &setpoint_steps_speed_right, DEFAULT_KP, DEFAULT_KI, DEFAULT_KD, DIRECT);
+//PID motor_left_pid(&input_steps_motor_left, &pwm_motor_speed_left, &setpoint_steps_speed_left, DEFAULT_KP, DEFAULT_KI, DEFAULT_KD, DIRECT);
+//PID motor_right_pid(&input_steps_motor_right, &pwm_motor_speed_right, &setpoint_steps_speed_right, DEFAULT_KP, DEFAULT_KI, DEFAULT_KD, DIRECT);
+//volatile struct PID_DATA motor_left_pid;
+//volatile struct PID_DATA motor_right_pid;
 
 /* ::::::::::::::::::: Configure the robot ::::::::::::::::::: */
 
@@ -293,24 +301,22 @@ void setup(){
   steps_reach_motor_left = 0;
   steps_reach_motor_right = 0;
 
-  /* Initialize step counters */
-  steps_motor_left = 0;
-  steps_motor_right = 0;
-
-  /* Initiliaze rotation counters */
-  rotations_motor_left = 0;
-  rotations_motor_right = 0;
-
   /* Initialize actual rotation */
   actual_rotation = 0;
+
+  /* Disable the two motors */
+  motor_left_enabled = false;
+  motor_right_enabled = false;
 
   /* Initialize pwm speed */
   pwm_motor_speed_left = 0;
   pwm_motor_speed_right = 0;
 
   /* Initialize counter of steps per motor adjust */
-  input_steps_motor_left = 0;
-  input_steps_motor_right = 0;
+  //input_steps_motor_left = 0;
+  //input_steps_motor_right = 0;
+  steps_motor_left = 0;
+  steps_motor_right = 0;
 
   /* Initialize speed wanted in each motor */
   setpoint_steps_speed_left = 0;
@@ -376,8 +382,10 @@ void setup(){
   #endif
 
   /* Configure PID */
-  motor_left_pid.SetMode(AUTOMATIC);
-  motor_right_pid.SetMode(AUTOMATIC);
+  //motor_left_pid.SetMode(AUTOMATIC);
+  //motor_right_pid.SetMode(AUTOMATIC);
+  //pid_Init(pid_kp, pid_ki, pid_kd, &motor_left_pid);
+  //pid_Init(pid_kp, pid_ki, pid_kd, &motor_right_pid);
 
   #ifdef ENABLE_LOG
   /* Start PID Controller for each motor on automatic mode */
@@ -405,16 +413,9 @@ void loop(){
 #endif
 
   /* Move 1000mm - 100cm - 1m */
-  moveAhead(1000);
-  //while(true);
-  //delay(30000);
-  //unsigned int distance_wanted = ceil((double) abs(1000) / step_length);
-  //distance_wanted_left = distance_wanted;
-  //distance_wanted_right = distance_wanted;
-  //turnForward();
-  //acelerateMotors(80);
+  moveAhead(400);
   delay(10000);
-  brake();
+  rotateRobot(90);
   delay(5000);
 }
 
@@ -422,37 +423,29 @@ void loop(){
 
 /* Increment counter of the motor left */
 void stepCounterMotorLeft(){
-  /* Number of steps performed by motor left */
-  steps_motor_left++;  
-  /* Number of steps as input for PID */
-  input_steps_motor_left += 1;
+  /* Steps cycle of motor right */
+  steps_motor_left++;
   /* Total number of steps reached by motor left */
   steps_reach_motor_left++;
   
   /* Brake motors if we had reached the distance wanted */
   if(steps_reach_motor_left >= distance_wanted_left){
-    /* Brake this motor */
-    brakeMotor(MOTOR_LEFT);
-    /* Zero speed of pwm output */
-    zeroPwmSpeedSide(left);
-    /* And set the speed wanted to 0 (fading stop) */
-    setpoint_steps_speed_left = 0;
-    /* Zero number of steps reach by this motor */
-    steps_reach_motor_left = 0;
     /* Remove mutex */
     routine_flag_mutex_lock_left = false;
+    /* Disable motor left */
+    motor_left_enabled = false;
+    /* Brake this motor */
+    brakeMotor(MOTOR_LEFT);
+    /* Zero number of steps reach by this motor */
+    steps_reach_motor_left = 0;
     /* Zero distance Wanted */
     distance_wanted_left = 0;
+    /* Zero PWM Speed */
+    pwm_motor_speed_left = 0;
 
     #ifdef ENABLE_LOG
-    printDebugn("Stopped Motor Left");
+    //printDebugn("Stopped Motor Left");
     #endif
-  }
-
-    /* Increase rotation if we had completed one */
-  if(steps_motor_left == ENCODER_STEPS){
-    steps_motor_left = 0;
-    rotations_motor_left++;
   }
 
   /* Show that a interruption has occured on lazy debug */
@@ -466,37 +459,29 @@ void stepCounterMotorLeft(){
 
 /* Increment counter of the motor right */
 void stepCounterMotorRight(){
-  /* Number of steps performed by motor right */
+  /* Steps cycle of motor right */
   steps_motor_right++;
-  /* Number of steps as input for PID */
-  input_steps_motor_right += 1;
   /* Total number of steps reached by motor right */
   steps_reach_motor_right++;
 
   /* Brake motor right if we had reached the distance wanted */
   if(steps_reach_motor_right >= distance_wanted_right){  
-    /* Brake this motor */
-    brakeMotor(MOTOR_RIGHT);
-    /* Zero speed of pwm output */
-    zeroPwmSpeedSide(right);
-    /* And set the speed wanted to 0 (fading stop) */
-    setpoint_steps_speed_right = 0;
-    /* Zero number of steps reach by this motor */
-    steps_reach_motor_right = 0;
     /* Remove mutex */
     routine_flag_mutex_lock_right = false;
+    /* Disable motor right */
+    motor_right_enabled = false;
+    /* Brake this motor */
+    brakeMotor(MOTOR_RIGHT);
+    /* Zero number of steps reach by this motor */
+    steps_reach_motor_right = 0;
     /* Zero distance Wanted */
     distance_wanted_right = 0;
+    /* Zero PWM Speed */
+    pwm_motor_speed_right = 0;
     
     #ifdef ENABLE_LOG
-    printDebugn("Stopped Motor Right");
+    //printDebugn("Stopped Motor Right");
     #endif
-  }
-  
-  /* Increase rotation if we had completed one */
-  if(steps_motor_right == ENCODER_STEPS){
-    steps_motor_right = 0;
-    rotations_motor_right++;
   }
   
   /* Show that a interruption has occured on lazy debug */
@@ -510,24 +495,49 @@ void stepCounterMotorRight(){
 
 /* Adjust desired speed to pwm */
 void adjustMotors(){
+  /* Change inputs of PID controller */
+  //input_steps_motor_left = steps_reach_motor_left;
+  //input_steps_motor_right = steps_reach_motor_right;
+  
   /* Compute new PID values */
-  motor_left_pid.Compute();
-  motor_right_pid.Compute();
+  //motor_left_pid.Compute();
+  //motor_right_pid.Compute();
+  //pwm_motor_speed_left = pid_Controller(setpoint_steps_speed_left, steps_motor_left, &motor_left_pid);
+  //pwm_motor_speed_right = pid_Controller(setpoint_steps_speed_right, steps_motor_right, &motor_left_pid);
 
   /* Adjust pwm output of each motor */
-  analogWrite(SPEED_MOTOR_LEFT, pwm_motor_speed_left);
+  if(motor_left_enabled){
+    pwm_motor_speed_left += pid_kp * (setpoint_steps_speed_left - steps_motor_left);
+  }
+  if(motor_right_enabled){
+    pwm_motor_speed_right += pid_kp * (setpoint_steps_speed_right - steps_motor_right);
+  }
+
+  /* Adjust difference of the two motors */
+  if(steps_motor_left > steps_motor_right){
+    pwm_motor_speed_right += pid_ki * (steps_motor_left - steps_motor_right);
+    pwm_motor_speed_right -= pid_kd * (steps_motor_left - steps_motor_right);
+  }
+  else{
+    pwm_motor_speed_left += pid_ki * (steps_motor_right - steps_motor_left);
+    pwm_motor_speed_left -= pid_kd * (steps_motor_right - steps_motor_left);
+  }
+  
   analogWrite(SPEED_MOTOR_RIGHT, pwm_motor_speed_right);
+  analogWrite(SPEED_MOTOR_LEFT, pwm_motor_speed_left);
 
   /* Clean values for next interation */
-  input_steps_motor_left = 0;
-  input_steps_motor_right = 0;
+  steps_motor_left = 0;
+  steps_motor_right = 0;
 
   #ifdef ENABLE_LOG
+  /*
   printLog("PWM (L|R) (");
   printLogVar(ceil(pwm_motor_speed_left));
   printMem(" | ");
   printLogVar(ceil(pwm_motor_speed_right));
   printMemn(" )");
+  */
   #endif
 }
 
@@ -541,21 +551,24 @@ void rotateRobot(int16_t desired_angle){
   else{
     turnLeft();
   }
-  unsigned int distance_wanted;
+  unsigned int distance_wanted = 0;
 
   /* While we wanted a rotation greater than 360, we increase distance wanted by number of steps */
   while(desired_angle >= 180){
-    distance_wanted += ceil(rotation_length/(step_length*2));
+    distance_wanted += ceil(rotation_length/(step_lengthv*2));
     desired_angle -= 180;
   }
  
   /* Now we calc the wanted distance, and to ensure precision distance is defined in steps */
-  distance_wanted += ceil((desired_angle * PI * (ROBOT_WIDTH_MM / 2.0)) / 180.0);
+  distance_wanted += ceil(ceil((desired_angle * PI * (ROBOT_WIDTH_MM / 2.0)) / 180.0) / step_length);
   distance_wanted_left = distance_wanted;
   distance_wanted_right = distance_wanted;
 
   /* Start motor parallel aceleration */
   parallelAceleration();
+  
+  /* Wait until it finishes the thread */
+  await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
 }
 
 /* Move ahead for some distance, if distance is negative move reverse */
@@ -581,8 +594,15 @@ void moveAhead(int distance){
   /* Start motor parallel aceleration */
   parallelAceleration();
 
+  Serial.println("COMECOU 1");
+
   /* Wait until it finishes the thread */
-  await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
+  //await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
+  while(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right){
+    delay(50);
+  }
+  Serial.println("FINALIZOU 3");
+  brake();
 }
 
 /* Parallel aceleratio of wheels */
@@ -591,12 +611,16 @@ void parallelAcelerationMotor(int motor_num){
   /* Define setpoint speed for each motor based on number of steps by second divided by motor adjust interval */
   switch(motor_num){
     case MOTOR_LEFT:
+      motor_left_enabled = true;
       setpoint_steps_speed_left = ceil(STEP_SPEED / ADJUST_MOTOR_INTERVAL);
       break;
     case MOTOR_RIGHT:
+      motor_right_enabled = true;
       setpoint_steps_speed_right = ceil(STEP_SPEED / ADJUST_MOTOR_INTERVAL);
       break;
     case BOTH_MOTORS:
+      motor_left_enabled = true;
+      motor_right_enabled = true;
       setpoint_steps_speed_left = ceil(STEP_SPEED / ADJUST_MOTOR_INTERVAL);
       setpoint_steps_speed_right = ceil(STEP_SPEED / ADJUST_MOTOR_INTERVAL);
       break;
@@ -819,18 +843,12 @@ void dumpInfo(){
   printLogVarn(steps_reach_motor_left);
   printMem("Distance Reach Motor Right = ");
   printLogVarn(steps_reach_motor_right);
-  printMem("Steps Motor Left = ");
-  printLogVarn(steps_motor_left);
-  printMem("Steps Motor Right = ");
-  printLogVarn(steps_motor_right);
-  printMem("Rotations Motor Left = ");
-  printLogVarn(rotations_motor_left);
-  printMem("Rotations Motor Right = ");
-  printLogVarn(rotations_motor_right);
   printMem("Input Ticks Motor Left = ");
-  printLogVarn(input_steps_motor_left);
+  //printLogVarn(input_steps_motor_left);
+  printLogVarn(steps_motor_left);
   printMem("Input Ticks Motor Right = ");
-  printLogVarn(input_steps_motor_right);
+  //printLogVarn(input_steps_motor_right);
+  printLogVarn(steps_motor_right);
   printMem("Routine Flag Mutex Lock = ");
   printLogVar(routine_flag_mutex_lock_left);
   printMem(" ");
