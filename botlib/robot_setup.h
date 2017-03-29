@@ -107,7 +107,7 @@
 
 /* PID Constants */
 #define DEFAULT_KP 1.30
-#define DEFAULT_KI 0.65
+#define DEFAULT_KI 0.80
 #define DEFAULT_KD 0.48
 
 /* Helpers */

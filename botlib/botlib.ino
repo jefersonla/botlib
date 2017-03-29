@@ -64,6 +64,9 @@
 /* System Utils */
 #include "system_utils.h"
 
+/* User Code */
+#include "user.c"
+
 /***** USER CONFIG *****/
 
 /* Enable control over serial */
@@ -392,6 +395,14 @@ void setup(){
   printLogn("PID Mode setted on automatic");
   #endif
 
+  /* Call user setup routine */
+  userSetup();
+
+  #ifdef ENABLE_LOG
+  /* Start PID Controller for each motor on automatic mode */
+  printLogn("Perfomed user setup functions");
+  #endif
+
   #ifdef ENABLE_LOG
   /* Print end of setup */
   printMemn("\nSystem Started Successfully!\n");
@@ -412,11 +423,14 @@ void loop(){
   readSerialData();
 #endif
 
+  /* Call user loop routine */
+  userLoop();
+
   /* Move 1000mm - 100cm - 1m */
-  moveAhead(400);
-  delay(10000);
-  rotateRobot(90);
-  delay(5000);
+  //moveAhead(400);
+  //delay(10000);
+  //rotateRobot(90);
+  //delay(5000);
 }
 
 /* :::::::::::::::::::       Helpers       ::::::::::::::::::: */
@@ -555,7 +569,7 @@ void rotateRobot(int16_t desired_angle){
 
   /* While we wanted a rotation greater than 360, we increase distance wanted by number of steps */
   while(desired_angle >= 180){
-    distance_wanted += ceil(rotation_length/(step_lengthv*2));
+    distance_wanted += ceil(rotation_length/(step_length*2));
     desired_angle -= 180;
   }
  
