@@ -4,14 +4,15 @@ A framework for controll custom robots.
 
 ---
 
-### Brazilians
+### Fala português?
 
 [Clique aqui](LEIAME.md) para ver o README em português.
 
 ## Introduction
 
 Robozino is a framework for control custom robots, it's compatible with 
-arduino and platformio(TODO), and make it simple as instantiate an object.
+Arduino and PlatformIO(TODO) platforms, and make control simple as 
+instantiate an object.
 
 ## About
 
