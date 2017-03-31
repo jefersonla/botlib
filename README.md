@@ -1,19 +1,20 @@
 # Robozino
-### Robot base sketch to deal with chinese robots
+
+A framework for controll custom robots.
+
 ---
 
-### Introduction
+### Fala português?
 
-Bot Lib is a base arduino sketch, made to make it easyer to work with chinese
-2WD robots. All you need to do is copy this library and put it on your arduino
-changing and configurating it accordily.
+[Clique aqui](LEIAME.md) para ver o README em português.
 
-### Use
+## Introduction
 
-Just do download and open the sketch in Arduino 1.5+, install the used libraries
-and start setup of your robot.
+Robozino is a framework for control custom robots, it's compatible with 
+Arduino and PlatformIO(TODO) platforms, and make control simple as 
+instantiate an object.
 
-### About
+## About
 
-Developed by Jeferson Lima(@jefersonla) and Andressa Andrade(@AndressAndrade)
-at Research Group WiserUFBA and CINO UFBA, for Inteligent Robots discipline at UFBA.
+Developed by @jefersonla and @AndressAndrade, with help from a lot of 
+collaborators :)
