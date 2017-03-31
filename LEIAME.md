@@ -1,4 +1,4 @@
-![Robozino Framework](docs/imgs/logo.png)
+![Robozino Framework](logo.png)
 
 Um framework para controle de robôs caseiros.
 

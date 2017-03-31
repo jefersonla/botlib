@@ -1,4 +1,4 @@
-![Robozino Framework](docs/imgs/logo.png)
+![Robozino Framework](logo.png)
 
 A framework for controll of custom robots.
 
