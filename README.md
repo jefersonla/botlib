@@ -1,6 +1,6 @@
 # Robozino
 
-A framework for controll custom robots.
+A framework for controll of custom robots.
 
 ---
 
