@@ -6,7 +6,7 @@ Um framework para controle de robôs caseiros.
 
 ### Speak english?
 
-[Click here](LEIAME.md) to see this README in english.
+[Click here](README.md) to see this README in english.
 
 ## Introdução
 
