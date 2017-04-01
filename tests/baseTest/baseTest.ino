@@ -83,10 +83,10 @@ void loop() {
 void ajustaMotor(){
   if(motoresAtivados){
     if(contaDireita > contaEsquerda){
-      
+      pwmEsquerda += kpEsquerda * (contaDireita - contaEsquerda);
     }
-    else if(contaEsq){
-      
+    else if(contaEsquerda > contaDireita){
+      pwmDireita += kpDireita * (contaEsquerda - contaDireita);
     }
     
     ACELERA_DIREITA(pwmDireita);
