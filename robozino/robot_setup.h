@@ -110,9 +110,9 @@
 #define DUMP_COMMAND        'D'
 
 /* PID Constants */
-#define DEFAULT_KP 1.30
-#define DEFAULT_KI 0.80
-#define DEFAULT_KD 0.48
+#define DEFAULT_KP 3.30
+#define DEFAULT_KI 2.80
+#define DEFAULT_KD 2.48
 
 /* Helpers */
 

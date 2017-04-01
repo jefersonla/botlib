@@ -452,7 +452,8 @@ void stepCounterMotorLeft(){
   if(steps_reach_motor_left >= distance_wanted_left){
     /* Remove mutex */
     routine_flag_mutex_lock_left = false;
-    fastDigitalWrite(REGISTER_LOCK_MOTOR_LEFT, LOW);
+    //fastDigitalWrite(REGISTER_LOCK_MOTOR_LEFT, LOW);
+    PORTB &= ~(1 << PORTB4);
     /* Disable motor left */
     motor_left_enabled = false;
     /* Brake this motor */
@@ -492,7 +493,8 @@ void stepCounterMotorRight(){
   if(steps_reach_motor_right >= distance_wanted_right){  
     /* Remove mutex */
     routine_flag_mutex_lock_right = false;
-    fastDigitalWrite(REGISTER_LOCK_MOTOR_RIGHT, LOW);
+    //fastDigitalWrite(REGISTER_LOCK_MOTOR_RIGHT, LOW);
+    PORTB &= ~(1 << PORTB5);
     /* Disable motor right */
     motor_right_enabled = false;
     /* Brake this motor */
@@ -534,22 +536,22 @@ void adjustMotors(){
   //pwm_motor_speed_right = pid_Controller(setpoint_steps_speed_right, steps_motor_right, &motor_left_pid);
 
   /* Adjust pwm output of each motor */
-  if(motor_left_enabled){
+  //if(motor_left_enabled){
     pwm_motor_speed_left += pid_kp * (setpoint_steps_speed_left - steps_motor_left);
-  }
-  if(motor_right_enabled){
+  //}
+  //if(motor_right_enabled){
     pwm_motor_speed_right += pid_kp * (setpoint_steps_speed_right - steps_motor_right);
-  }
+  //}
 
   /* Adjust difference of the two motors */
-  if(steps_motor_left > steps_motor_right){
+  /*if(steps_motor_left > steps_motor_right){
     pwm_motor_speed_right += pid_ki * (steps_motor_left - steps_motor_right);
     pwm_motor_speed_right -= pid_kd * (steps_motor_left - steps_motor_right);
   }
   else{
     pwm_motor_speed_left += pid_ki * (steps_motor_right - steps_motor_left);
     pwm_motor_speed_left -= pid_kd * (steps_motor_right - steps_motor_left);
-  }
+  }*/
   
   analogWrite(SPEED_MOTOR_RIGHT, pwm_motor_speed_right);
   analogWrite(SPEED_MOTOR_LEFT, pwm_motor_speed_left);
@@ -606,8 +608,10 @@ void rotateRobot(int16_t desired_angle){
   //await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
   Serial.println("STARTOU");
   //await(fastDigitalRead(REGISTER_LOCK_MOTOR_LEFT) || fastDigitalRead(REGISTER_LOCK_MOTOR_RIGHT));
-  while(digitalRead(REGISTER_LOCK_MOTOR_LEFT) || digitalRead(REGISTER_LOCK_MOTOR_RIGHT)){
-    delay(100);
+  //while(digitalRead(REGISTER_LOCK_MOTOR_LEFT) || digitalRead(REGISTER_LOCK_MOTOR_RIGHT)){
+  Serial.println(PINB, BIN);
+  while((((PINB & B00110000) >> 4) ^ B00000011) != B00000011){
+    delay(50);
   }
   delay(1000);
   Serial.println("FINALIZOU GG");
@@ -645,8 +649,8 @@ void moveAhead(int distance){
   /* Wait until it finishes the thread */
   //await(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right);
   //while(routine_flag_mutex_lock_left || routine_flag_mutex_lock_right){
-  while(digitalRead(REGISTER_LOCK_MOTOR_LEFT) || digitalRead(REGISTER_LOCK_MOTOR_RIGHT)){
-    delay(100);
+  while((((PINB & B00110000) >> 4) ^ B00000011) != B00000011){
+    delay(50);
   }
   delay(1000);
   Serial.println("FINALIZOU 3");
