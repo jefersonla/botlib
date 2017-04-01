@@ -15,13 +15,13 @@
 
 /* Enable of the Motor Left */
 /* Enable change direction or stop this motor */
-#define IN1_MOTOR_LEFT    7
-#define IN2_MOTOR_LEFT    8
+#define IN1_MOTOR_LEFT    9
+#define IN2_MOTOR_LEFT    10
 
 /* Enable of the Motor Right */
 /* Enable change direction or stop this motor */
-#define IN1_MOTOR_RIGHT   9
-#define IN2_MOTOR_RIGHT   10
+#define IN1_MOTOR_RIGHT   7
+#define IN2_MOTOR_RIGHT   8
 
 /* Software Serial Pins */
 #define SOFTWARE_SERIAL_TX_PIN  11

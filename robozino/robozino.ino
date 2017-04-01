@@ -189,9 +189,12 @@ mutex routine_flag_mutex_lock_left;
 mutex routine_flag_mutex_lock_right;
 
 /* PID Constants */
-volatile double pid_kp = DEFAULT_KP;
-volatile double pid_ki = DEFAULT_KI;
-volatile double pid_kd = DEFAULT_KD;
+volatile double pid_kp_left = DEFAULT_KP;
+volatile double pid_ki_left = DEFAULT_KI;
+volatile double pid_kd_left = DEFAULT_KD;
+volatile double pid_kp_right = DEFAULT_KP;
+volatile double pid_ki_right = DEFAULT_KI;
+volatile double pid_kd_right = DEFAULT_KD;
 //volatile uint16_t pid_kp = DEFAULT_KP;
 //volatile uint16_t pid_ki = DEFAULT_KI;
 //volatile uint16_t pid_kd = DEFAULT_KD;
@@ -535,23 +538,32 @@ void adjustMotors(){
   //pwm_motor_speed_left = pid_Controller(setpoint_steps_speed_left, steps_motor_left, &motor_left_pid);
   //pwm_motor_speed_right = pid_Controller(setpoint_steps_speed_right, steps_motor_right, &motor_left_pid);
 
+  if(steps_motor_left > steps_motor_right){
+    pid_kp_left *= (steps_motor_right / steps_motor_left);
+    pid_kp_right *= (steps_motor_left / steps_motor_right);
+  }
+  if(steps_motor_right > steps_motor_left ){
+    pid_kp_left *= (steps_motor_right / steps_motor_left);
+    pid_kp_right *= (steps_motor_left / steps_motor_right);
+  }
+
   /* Adjust pwm output of each motor */
-  //if(motor_left_enabled){
-    pwm_motor_speed_left += pid_kp * (setpoint_steps_speed_left - steps_motor_left);
-  //}
-  //if(motor_right_enabled){
-    pwm_motor_speed_right += pid_kp * (setpoint_steps_speed_right - steps_motor_right);
-  //}
+  if(motor_left_enabled){
+    pwm_motor_speed_left += pid_kp_left * (setpoint_steps_speed_left - steps_motor_left);
+  }
+  if(motor_right_enabled){
+    pwm_motor_speed_right += pid_kp_right * (setpoint_steps_speed_right - steps_motor_right);
+  }
 
   /* Adjust difference of the two motors */
-  /*if(steps_motor_left > steps_motor_right){
-    pwm_motor_speed_right += pid_ki * (steps_motor_left - steps_motor_right);
-    pwm_motor_speed_right -= pid_kd * (steps_motor_left - steps_motor_right);
+  if(steps_motor_left > steps_motor_right){
+    pwm_motor_speed_right += pid_ki_right * (steps_motor_left - steps_motor_right);
+    pwm_motor_speed_left -= pid_kd_left * (steps_motor_left - steps_motor_right);
   }
   else{
-    pwm_motor_speed_left += pid_ki * (steps_motor_right - steps_motor_left);
-    pwm_motor_speed_left -= pid_kd * (steps_motor_right - steps_motor_left);
-  }*/
+    pwm_motor_speed_left += pid_ki_left * (steps_motor_right - steps_motor_left);
+    pwm_motor_speed_right -= pid_kd_right * (steps_motor_right - steps_motor_left);
+  }
   
   analogWrite(SPEED_MOTOR_RIGHT, pwm_motor_speed_right);
   analogWrite(SPEED_MOTOR_LEFT, pwm_motor_speed_left);
