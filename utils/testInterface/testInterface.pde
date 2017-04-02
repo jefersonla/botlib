@@ -461,7 +461,7 @@ void controlEvent(ControlEvent theEvent) {
       /* If serial is enabled send the stop message */
       if (serialEnabled) {
         serialPort.write(STOP_MOTOR_MSG);
-        infoMsg("SENDING START MESSAGE TO ROBOT");
+        infoMsg("SENDING STOP MESSAGE TO ROBOT");
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }
