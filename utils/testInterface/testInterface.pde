@@ -279,9 +279,6 @@ void setup() {
 
   /* Set interface background */
   background(COLOR_WHITE);
-
-  /* Put logo image */
-  image(logo, 15, 15);
 }
 
 /* Draw interface */
@@ -335,6 +332,12 @@ void draw() {
     }
   }
 
+  /* Set interface background */
+  background(COLOR_WHITE);
+
+  /* Put logo image */
+  image(logo, 15, 15);
+
   /* Check if Serial List has updated */
   if (serialList != Serial.list()) {
     /* Update Serial List */
@@ -380,19 +383,17 @@ void controlEvent(ControlEvent theEvent) {
       break;
     case "pGainL":
       infoMsg("SETTING A NEW P GAIN ON LEFT SIDE");
-      if(serialEnabled){
+      if (serialEnabled) {
         //TODO
-      }
-      else{
+      } else {
         warningMsg("SERIAL NOT CONECTED");
       }
       break;
     case "pGainR":
       infoMsg("SETTING A NEW P GAIN ON RIGHT SIDE");
-      if(serialEnabled){
+      if (serialEnabled) {
         //TODO
-      }
-      else{
+      } else {
         warningMsg("SERIAL NOT CONECTED");
       }
       break;
