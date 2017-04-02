@@ -399,11 +399,12 @@ void controlEvent(ControlEvent theEvent) {
   /* Dropdown list event */
   else if (theEvent.isAssignableFrom(ScrollableList.class)) {
     /* Get Value of scrollable list clicked */
-    String value = theEvent.getStringValue();
+    int value = int(theEvent.getValue());
 
+    /* Configure the desired dropdown list */
     switch(parameter) {
     case "SerialList":
-      infoMsg("SERIAL PORT - " + value + " - SELECTED");
+      infoMsg("SERIAL PORT - " + serialList[value] + " - SELECTED");
       break;
     default:
       errorMsg("UNKNOW SCROLLABLE LIST EVENT - " + parameter);
