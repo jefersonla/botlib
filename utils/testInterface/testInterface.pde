@@ -35,6 +35,13 @@ import controlP5.ControlEvent;
 import controlP5.Textfield;
 import controlP5.Toggle;
 import controlP5.Button;
+import controlP5.ScrollableList;
+import processing.serial.Serial;
+
+/* Color Constants */
+final color COLOR_WHITE = color(255);
+final color COLOR_ORANGE_LIGHT = color(131, 255, 20);
+final color COLOR_GREEN_LIGHT = color(232, 158, 12);
 
 /* P5 Controller */
 ControlP5 cp5;
@@ -54,6 +61,9 @@ color graphColors[];
 /* Graph of rotations of each motor */
 Graph LineGraph;
 
+/* Display line check */
+boolean displayLine[];
+
 /* Content of LineGraph */
 float[][] lineGraphValues;
 float[] lineGraphSampleNumbers;
@@ -71,7 +81,7 @@ void setup() {
   /* Configure Line Graph */
 
   /* Construct LineGraph */
-  LineGraph = new Graph(230, 210, 470, 290, color (20, 20, 200));
+  LineGraph = new Graph(239, 225, 480, 290, color (20, 20, 200));
 
   /* Labels of LineGraph */
   LineGraph.xLabel =" Time ";
@@ -92,8 +102,8 @@ void setup() {
 
   /* Colors of the LineGraph */
   graphColors = new color[numberOfLines];
-  graphColors[0] = color(131, 255, 20);
-  graphColors[1] = color(232, 158, 12);
+  graphColors[0] = COLOR_ORANGE_LIGHT;
+  graphColors[1] = COLOR_GREEN_LIGHT;
 
   /* Array of values of the LineGraph */
   lineGraphValues = new float[numberOfLines][timeInterval];
@@ -112,6 +122,12 @@ void setup() {
         lineGraphSampleNumbers[j] = j;
       }
     }
+  }
+
+  /* Initialize visibility of LineGraph lines */
+  displayLine = new boolean[numberOfLines];
+  for (int i = 0; i < numberOfLines; i++) {
+    displayLine[i] = true;
   }
 
   /* Resize Y axis limits input */
@@ -175,6 +191,20 @@ void setup() {
     .setText("1.0")
     .setWidth(inputWidth)
     .setAutoClear(false);
+
+  /* Display serial avaialable dropdown list and label*/
+  cp5.addTextlabel("serialListLabel")
+    .setText("Serial List")
+    .setPosition(673, 115)
+    .setColor(0);
+  cp5.addScrollableList("Serial List")
+    .setPosition(673, 130)
+    .setSize(100, 200)
+    .setBarHeight(20)
+    .setItemHeight(20)
+    .addItems(Serial.list())
+    .setOpen(false)
+    .setType(ScrollableList.DROPDOWN);
 }
 
 /* Draw interface */
@@ -200,12 +230,6 @@ void draw() {
     // split the string at delimiter (space)
     String[] nums = split(myString, ' ');
 
-    //int numberOfInvisibleLineGraphs = 0;
-    //for (int i = 0; i < 6; i++) {
-    //  if (int(getPlotterConfigString("lgVisible"+(i+1))) == 0) {
-    //    numberOfInvisibleLineGraphs++;
-    //  }
-    //}
     // update line graph
     for (int i = 0; i < nums.length; i++) {
       try {
@@ -222,12 +246,17 @@ void draw() {
     }
   }
 
-  // draw the line graphs
-  background(255); 
+  /* Print Background with white color */
+  background(COLOR_WHITE);
+
+  /* Print the LineGraph */
   LineGraph.DrawAxis();
-  for (int i = 0; i < lineGraphValues.length; i++) {
-    LineGraph.GraphColor = graphColors[i];
-    if (true) { //(int(getPlotterConfigString("lgVisible"+(i+1))) == 1){
+  for (int i = 0; i < numberOfLines; i++) {
+    /* Check if the line is configured to be displayed */
+    if (displayLine[i]) {
+      /* Chose color of the actual line */
+      LineGraph.GraphColor = graphColors[i];
+      /* Update the graph with the time */
       LineGraph.LineGraph(lineGraphSampleNumbers, lineGraphValues[i]);
     }
   }
@@ -236,10 +265,11 @@ void draw() {
 /* Check which event has occured */
 void controlEvent(ControlEvent theEvent) {
 
+  /* Get name of interface which perform the event */
+  String parameter = theEvent.getName();
+
   /* If the event was triggered from a text field */
   if (theEvent.isAssignableFrom(Textfield.class)) {
-    /* Get name of interface which perform the event */
-    String parameter = theEvent.getName();
 
     /* Get value of textfield */
     String value = theEvent.getStringValue();
@@ -248,18 +278,49 @@ void controlEvent(ControlEvent theEvent) {
     switch(parameter) {
     case "lgMaxY": 
       LineGraph.yMax = float(value);
-      System.out.println("[INFO] UPDATING MAX LIMIT OF LINE GRAPH");
+      infoMsg("UPDATING MAX LIMIT OF LINE GRAPH");
       break;
     case "lgMinY":
       LineGraph.yMin = float(value);
-      System.out.println("[INFO] UPDATING MIN LIMIT OF LINE GRAPH");
+      infoMsg("UPDATING MIN LIMIT OF LINE GRAPH");
       break;
     default:
-      System.err.println("[ERROR] UNKNOW EVENT - " + parameter + " - " + value);
+      errorMsg("UNKNOW TEXTFIELD EVENT - " + parameter + " - " + value);
     }
   }
   /* Was triggered from a switch button */
   else if (theEvent.isAssignableFrom(Toggle.class)) {
-    
+
+    /* Get value of the toggle switch button */
+    boolean value = theEvent.getValue() > 0 ? true : false;
+
+    /* Check which operations need to be perfomed */
+    switch(parameter) {
+    case "lgStepsL":
+      displayLine[0] = value;
+      break;
+    case "lgStepsR":
+      displayLine[1] = value;
+      break;
+    default:
+      errorMsg("UNKNOW SWITCH EVENT - " + parameter + " - " + value);
+    }
   }
+}
+
+/* Debug Messages */
+
+/* Info Message */
+void infoMsg(String msg) {
+  System.out.println("[INFO] " + msg);
+}
+
+/* Warning Message */
+void warningMsg(String msg) {
+  System.err.println("[WARNING] " + msg);
+}
+
+/* Error Message */
+void errorMsg(String msg) {
+  System.err.println("[ERROR] " + msg);
 }
