@@ -51,6 +51,13 @@ final color COLOR_PINK = color(200, 46, 232);
 final int START_MOTOR_BUTTON = 1;
 final int STOP_MOTOR_BUTTON = 2;
 
+/* Serial Speed */
+final int SERIAL_SPEED = 115200;
+
+/* Messages to send */
+final String START_MOTOR_MSG = "I";
+final String STOP_MOTOR_MSG = "S";
+
 /* P5 Controller */
 ControlP5 cp5;
 
@@ -61,7 +68,7 @@ final int numberOfLines = 2;
 final int timeInterval = 60;
 
 /* Enable use of mockup serial */
-final boolean mockupSerial = true;
+final boolean mockupSerial = false;
 
 /* Graph Line colors */
 color graphColors[];
@@ -86,6 +93,9 @@ Serial serialPort;
 /* Serial Buffer */
 final int MAX_SERIAL_BUFFER = 100;
 byte[] serialBuffer; 
+
+/* Logo Image */
+PImage logo;
 
 /* Setup Interface */
 void setup() {
@@ -212,13 +222,15 @@ void setup() {
     .setAutoClear(false);
 
   /* Display serial avaialable dropdown list and label*/
+  int serialListX = 673;
+  int serialListY = 115;
   serialList = Serial.list();
   cp5.addTextlabel("serialListLabel")
     .setText("Serial List")
-    .setPosition(673, 115)
+    .setPosition(serialListX, serialListY)
     .setColor(0);
   cp5.addScrollableList("SerialList")
-    .setPosition(673, 130)
+    .setPosition(serialListX, serialListY + 15)
     .setSize(100, 200)
     .setBarHeight(20)
     .setItemHeight(20)
@@ -226,17 +238,32 @@ void setup() {
     .setOpen(false)
     .setType(ScrollableList.DROPDOWN);
 
+  /* Toolbar control */
+  int toolbarX = 400;
+  int toolbarY = 130;
+
+  /* Enable Serial and label */
+  cp5.addTextlabel("serialEnableLabel")
+    .setText("  Serial\n on/off")
+    .setPosition(toolbarX + 222, toolbarY - 20)
+    .setColor(0);
+  cp5.addToggle("seEn")
+    .setPosition(toolbarX + 222, toolbarY)
+    .setValue(false)
+    .setMode(ControlP5.SWITCH)
+    .setColorActive(COLOR_BLUE_LIGHT);
+
   /* Start Motors */
   cp5.addButton("Start Motor")
     .setValue(START_MOTOR_BUTTON)
-    .setPosition(440, 130)
+    .setPosition(toolbarX, toolbarY)
     .updateSize()
     .setSize(100, 20);
 
   /* Stop Motors */
   cp5.addButton("Stop Motor")
     .setValue(STOP_MOTOR_BUTTON)
-    .setPosition(550, 130)
+    .setPosition(toolbarX + 110, toolbarY)
     .updateSize()
     .setSize(100, 20);
 
@@ -246,6 +273,15 @@ void setup() {
 
   /* Initialize Serial Buffer */
   serialBuffer = new byte[MAX_SERIAL_BUFFER];
+
+  /* Load logo image */
+  logo = loadImage("images/logo.png");
+
+  /* Set interface background */
+  background(COLOR_WHITE);
+
+  /* Put logo image */
+  image(logo, 15, 15);
 }
 
 /* Draw interface */
@@ -288,37 +324,34 @@ void draw() {
       }
 
       /* Add value received in each line */
-      if(dataReceived.length >= numberOfLines){
+      if (dataReceived.length >= numberOfLines) {
         lineGraphValues[i][timeInterval - 1] = float(dataReceived[i]);
       }
       /* Otherwise add a 0 */
-      else{
+      else {
         errorMsg("INVALID DATA RECEIVED");
         lineGraphValues[i][timeInterval - 1] = 0;
       }
     }
+  }
 
-    /* Print Background with white color */
-    background(COLOR_WHITE);
+  /* Check if Serial List has updated */
+  if (serialList != Serial.list()) {
+    /* Update Serial List */
+    serialList = Serial.list();
+    cp5.get(ScrollableList.class, "SerialList")
+      .setItems(serialList);
+  }
 
-    /* Check if Serial List has updated */
-    if (serialList != Serial.list()) {
-      /* Update Serial List */
-      serialList = Serial.list();
-      cp5.get(ScrollableList.class, "SerialList")
-        .setItems(serialList);
-    }
-
-    /* Print the LineGraph */
-    LineGraph.DrawAxis();
-    for (int i = 0; i < numberOfLines; i++) {
-      /* Check if the line is configured to be displayed */
-      if (displayLine[i]) {
-        /* Chose color of the actual line */
-        LineGraph.GraphColor = graphColors[i];
-        /* Update the graph with the time */
-        LineGraph.LineGraph(lineGraphSampleNumbers, lineGraphValues[i]);
-      }
+  /* Print the LineGraph */
+  LineGraph.DrawAxis();
+  for (int i = 0; i < numberOfLines; i++) {
+    /* Check if the line is configured to be displayed */
+    if (displayLine[i]) {
+      /* Chose color of the actual line */
+      LineGraph.GraphColor = graphColors[i];
+      /* Update the graph with the time */
+      LineGraph.LineGraph(lineGraphSampleNumbers, lineGraphValues[i]);
     }
   }
 }
@@ -345,6 +378,24 @@ void controlEvent(ControlEvent theEvent) {
       LineGraph.yMin = float(value);
       infoMsg("UPDATING MIN LIMIT OF LINE GRAPH");
       break;
+    case "pGainL":
+      infoMsg("SETTING A NEW P GAIN ON LEFT SIDE");
+      if(serialEnabled){
+        //TODO
+      }
+      else{
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "pGainR":
+      infoMsg("SETTING A NEW P GAIN ON RIGHT SIDE");
+      if(serialEnabled){
+        //TODO
+      }
+      else{
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
     default:
       errorMsg("UNKNOW TEXTFIELD EVENT - " + parameter + " - " + value);
     }
@@ -365,6 +416,28 @@ void controlEvent(ControlEvent theEvent) {
       infoMsg("CHANGING STATE OF VISIBILITY OF LINE STEPS MOTOR RIGHT");
       displayLine[1] = value;
       break;
+    case "seEn":
+      /* If value is to enable serial */
+      if (value) {
+        /* And serial port is correct, turn enable serial flag true */
+        if (serialPort != null) {
+          infoMsg("SERIAL ACTIVATED SUCCESSFULLY");
+          serialEnabled = true;
+        }
+        /* Otherwise, if we found errors keep button on off state */
+        else {
+          errorMsg("CANNOT ACTIVATE SERIAL. SERIAL PORT UNDEFINED");
+          cp5.get(Toggle.class, "seEn")
+            .setValue(false);
+          serialEnabled = false;
+        }
+      }
+      /* Otherwise just disable serial interface */
+      else {
+        infoMsg("SERIAL DISABLED");
+        serialEnabled = false;
+      }
+      break;
     default:
       errorMsg("UNKNOW SWITCH EVENT - " + parameter + " - " + value);
     }
@@ -377,7 +450,7 @@ void controlEvent(ControlEvent theEvent) {
     case "Start Motor":
       /* If serial is enabled send the start message */
       if (serialEnabled) {
-        // TODO
+        serialPort.write(START_MOTOR_MSG);
         infoMsg("SENDING START MESSAGE TO ROBOT");
       } else {
         warningMsg("SERIAL NOT CONECTED");
@@ -386,7 +459,7 @@ void controlEvent(ControlEvent theEvent) {
     case "Stop Motor":
       /* If serial is enabled send the stop message */
       if (serialEnabled) {
-        // TODO
+        serialPort.write(STOP_MOTOR_MSG);
         infoMsg("SENDING START MESSAGE TO ROBOT");
       } else {
         warningMsg("SERIAL NOT CONECTED");
@@ -405,6 +478,16 @@ void controlEvent(ControlEvent theEvent) {
     switch(parameter) {
     case "SerialList":
       infoMsg("SERIAL PORT - " + serialList[value] + " - SELECTED");
+      /* Try to instantiate a new serial connection */
+      try {
+        serialPort = new Serial(this, serialList[value], SERIAL_SPEED);
+      }
+      catch(Exception e) {
+        errorMsg("CANNOT CONNECT TO SERIAL PORT " + serialList[value] + ", \n" + 
+          "PROBABLY YOU DON'T HAVE ENOUGH PRIVILEGES, " + 
+          "OR THIS INTERFACE IS BEING USED BY ANOTHER PROGRAM");
+        serialPort = null;
+      }
       break;
     default:
       errorMsg("UNKNOW SCROLLABLE LIST EVENT - " + parameter);
