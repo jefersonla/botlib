@@ -37,6 +37,9 @@ volatile int contaEsquerda = 0;
 volatile double kpDireita = 1.2;
 volatile double kpEsquerda = 1.2;
 
+volatile int velocidadeDireita = 65;
+volatile int velocidadeEsquerda = 66;
+
 volatile int pwmDireita = 0;
 volatile int pwmEsquerda = 0;
 
@@ -67,8 +70,8 @@ void setup() {
 void loop() {
   contaDireita = 0;
   contaEsquerda = 0;
-  ACELERA_DIREITA(65);
-  ACELERA_ESQUERDA(66);
+  ACELERA_DIREITA(velocidadeDireita);
+  ACELERA_ESQUERDA(velocidadeEsquerda);
   IR_PARA_FRENTE();
   motoresAtivados = true;
   delay(1000);
@@ -89,8 +92,10 @@ void ajustaMotor(){
       pwmDireita += kpDireita * (contaEsquerda - contaDireita);
     }
     
-    ACELERA_DIREITA(pwmDireita);
-    ACELERA_ESQUERDA(pwmEsquerda);
+    //ACELERA_DIREITA(pwmDireita);
+    //ACELERA_ESQUERDA(pwmEsquerda);
+    velocidadeDireita += pwmDireita;
+    velocidadeEsquerda += pwmEsquerda;
   }
 }
 
