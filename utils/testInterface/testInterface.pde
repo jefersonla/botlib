@@ -31,6 +31,10 @@
  */
 
 import controlP5.ControlP5;
+import controlP5.ControlEvent;
+import controlP5.Textfield;
+import controlP5.Toggle;
+import controlP5.Button;
 
 /* P5 Controller */
 ControlP5 cp5;
@@ -102,13 +106,75 @@ void setup() {
     for (int j = 0; j < timeInterval; j++) {
       /* Initialize lineGraphValues */
       lineGraphValues[i][j] = 0;
-      
+
       /* Initialize sample number one time only */
-      if(i == 0){
+      if (i == 0) {
         lineGraphSampleNumbers[j] = j;
       }
     }
   }
+
+  /* Resize Y axis limits input */
+  int xAxisLineGraph = 180;
+  int yAxisLineGraph = 195;
+  int inputWidth = 40;
+  cp5.addTextfield("lgMaxY")
+    .setPosition(xAxisLineGraph, yAxisLineGraph)
+    .setText("250")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+  cp5.addTextfield("lgMinY")
+    .setPosition(xAxisLineGraph, yAxisLineGraph + 290)
+    .setText("0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+
+  /* Label for on/off button and change kp */
+  int labelXPos = 10;
+  int labelYPos = 160;
+  cp5.addTextlabel("on/off")
+    .setText("on/off")
+    .setPosition(labelXPos + 25, labelYPos)
+    .setColor(0);
+  cp5.addTextlabel("pgain")
+    .setText("P Gain")
+    .setPosition(labelXPos + 75, labelYPos)
+    .setColor(0);
+  cp5.addTextlabel("lmark")
+    .setText("L")
+    .setPosition(labelXPos, labelYPos + 20)
+    .setColor(0);
+  cp5.addTextlabel("rmark")
+    .setText("R")
+    .setPosition(labelXPos, labelYPos + 49)
+    .setColor(0);
+
+  /* Enable graphic visualization of each steps counter */
+  int gainXPos = 30;
+  int gainYPos = 174;
+  cp5.addToggle("lgStepsL")
+    .setPosition(gainXPos, gainYPos)
+    .setValue(true)
+    .setMode(ControlP5.SWITCH)
+    .setColorActive(graphColors[0]);
+  cp5.addToggle("lgStepsR")
+    .setPosition(gainXPos, gainYPos + 30)
+    .setValue(true)
+    .setMode(ControlP5.SWITCH)
+    .setColorActive(graphColors[1]);
+
+  /* Input for P Gain */
+  cp5.addTextfield("pGainL")
+    .setPosition(gainXPos + 50, gainYPos)
+    .setText("1.0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+  /* Input for P Gain */
+  cp5.addTextfield("pGainR")
+    .setPosition(gainXPos + 50, gainYPos + 30)
+    .setText("1.0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
 }
 
 /* Draw interface */
@@ -163,6 +229,31 @@ void draw() {
     LineGraph.GraphColor = graphColors[i];
     if (true) { //(int(getPlotterConfigString("lgVisible"+(i+1))) == 1){
       LineGraph.LineGraph(lineGraphSampleNumbers, lineGraphValues[i]);
+    }
+  }
+}
+
+/* Check which event has occured */
+void controlEvent(ControlEvent theEvent) {
+
+  /* If the event was triggered from an text field */
+  if (theEvent.isAssignableFrom(Textfield.class)) {
+    /* Get name of interface which perform the event */
+    String parameter = theEvent.getName();
+
+    /* Get value of textfield */
+    String value = theEvent.getStringValue();
+
+    /* Now change parameters accordily */
+    switch(parameter) {
+    case "lgMaxY": 
+      LineGraph.yMax = float(value);
+      break;
+    case "lgMinY":
+      LineGraph.yMin = float(value);
+      break;
+    default:
+      System.err.println("[ERROR] UNKNOW EVENT - " + parameter + " - " + value);
     }
   }
 }
