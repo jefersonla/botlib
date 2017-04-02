@@ -165,13 +165,13 @@ void setup() {
 
   /* Input for P Gain */
   cp5.addTextfield("pGainL")
-    .setPosition(gainXPos + 50, gainYPos)
+    .setPosition(gainXPos + 52, gainYPos)
     .setText("1.0")
     .setWidth(inputWidth)
     .setAutoClear(false);
   /* Input for P Gain */
   cp5.addTextfield("pGainR")
-    .setPosition(gainXPos + 50, gainYPos + 30)
+    .setPosition(gainXPos + 52, gainYPos + 30)
     .setText("1.0")
     .setWidth(inputWidth)
     .setAutoClear(false);
@@ -236,7 +236,7 @@ void draw() {
 /* Check which event has occured */
 void controlEvent(ControlEvent theEvent) {
 
-  /* If the event was triggered from an text field */
+  /* If the event was triggered from a text field */
   if (theEvent.isAssignableFrom(Textfield.class)) {
     /* Get name of interface which perform the event */
     String parameter = theEvent.getName();
@@ -248,12 +248,18 @@ void controlEvent(ControlEvent theEvent) {
     switch(parameter) {
     case "lgMaxY": 
       LineGraph.yMax = float(value);
+      System.out.println("[INFO] UPDATING MAX LIMIT OF LINE GRAPH");
       break;
     case "lgMinY":
       LineGraph.yMin = float(value);
+      System.out.println("[INFO] UPDATING MIN LIMIT OF LINE GRAPH");
       break;
     default:
       System.err.println("[ERROR] UNKNOW EVENT - " + parameter + " - " + value);
     }
+  }
+  /* Was triggered from a switch button */
+  else if (theEvent.isAssignableFrom(Toggle.class)) {
+    
   }
 }
