@@ -43,6 +43,10 @@ final color COLOR_WHITE = color(255);
 final color COLOR_ORANGE_LIGHT = color(131, 255, 20);
 final color COLOR_GREEN_LIGHT = color(232, 158, 12);
 
+/* Buttons */
+final int START_MOTOR_BUTTON = 1;
+final int STOP_MOTOR_BUTTON = 2;
+
 /* P5 Controller */
 ControlP5 cp5;
 
@@ -209,6 +213,21 @@ void setup() {
     .addItems(serialList)
     .setOpen(false)
     .setType(ScrollableList.DROPDOWN);
+
+  /* Start Motors */
+  cp5.addButton("Start Motor")
+    .setValue(START_MOTOR_BUTTON)
+    .setPosition(440, 130)
+    .updateSize()
+    .setSize(100, 20);
+    
+  /* Stop Motors */
+  cp5.addButton("Stop Motor")
+    .setValue(STOP_MOTOR_BUTTON)
+    .setPosition(550, 130)
+    .updateSize()
+    .setSize(100, 20);
+  
 }
 
 /* Draw interface */
