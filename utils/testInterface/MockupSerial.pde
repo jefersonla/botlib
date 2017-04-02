@@ -2,6 +2,7 @@
 The MIT License (MIT)
  
  Copyright (c) 2013 Sebatian Nilsson
+ Modified by (c) 2017 Jeferson Lima
  
  Permission is hereby granted, free of charge, to any person obtaining a copy
  of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +26,7 @@ The MIT License (MIT)
 // If you want to debug the plotter without using a real serial port
 int mockupValue = 0;
 int mockupDirection = 10;
-final char mockupDelimiter = ',';
+final String mockupDelimiter = ",";
 final char mockupEnd = '\n';
 
 String mockupSerialFunction() {
@@ -56,9 +57,8 @@ String mockupSerialFunction() {
       r += mockupValue/32 + mockupDelimiter;
       break;
     }
-    if (i < 7)
-      r += mockupEnd;
   }
+  r += mockupEnd;
   delay(10);
   return r;
 }
