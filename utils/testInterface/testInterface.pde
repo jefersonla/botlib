@@ -68,6 +68,9 @@ boolean displayLine[];
 float[][] lineGraphValues;
 float[] lineGraphSampleNumbers;
 
+/* List of serial availables */
+String serialList[];
+
 /* Setup Interface */
 void setup() {
   /* Create Interface */
@@ -193,6 +196,7 @@ void setup() {
     .setAutoClear(false);
 
   /* Display serial avaialable dropdown list and label*/
+  serialList = Serial.list();
   cp5.addTextlabel("serialListLabel")
     .setText("Serial List")
     .setPosition(673, 115)
@@ -202,7 +206,7 @@ void setup() {
     .setSize(100, 200)
     .setBarHeight(20)
     .setItemHeight(20)
-    .addItems(Serial.list())
+    .addItems(serialList)
     .setOpen(false)
     .setType(ScrollableList.DROPDOWN);
 }
@@ -248,6 +252,14 @@ void draw() {
 
   /* Print Background with white color */
   background(COLOR_WHITE);
+
+  /* Check if Serial List has updated */
+  if (serialList != Serial.list()) {
+    /* Update Serial List */
+    serialList = Serial.list();
+    cp5.get(ScrollableList.class, "SerialList")
+      .setItems(serialList);
+  }
 
   /* Print the LineGraph */
   LineGraph.DrawAxis();
