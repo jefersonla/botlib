@@ -42,6 +42,10 @@ import processing.serial.Serial;
 final color COLOR_WHITE = color(255);
 final color COLOR_ORANGE_LIGHT = color(131, 255, 20);
 final color COLOR_GREEN_LIGHT = color(232, 158, 12);
+final color COLOR_RED = color(255, 0, 0);
+final color COLOR_PURPLE = color(62, 12, 232);
+final color COLOR_BLUE_LIGHT = color(13, 255, 243);
+final color COLOR_PINK = color(200, 46, 232);
 
 /* Buttons */
 final int START_MOTOR_BUTTON = 1;
@@ -74,6 +78,14 @@ float[] lineGraphSampleNumbers;
 
 /* List of serial availables */
 String serialList[];
+
+/* Serial object and serial enable variable */
+boolean serialEnabled;
+Serial serialPort;
+
+/* Serial Buffer */
+final int MAX_SERIAL_BUFFER = 100;
+byte[] serialBuffer; 
 
 /* Setup Interface */
 void setup() {
@@ -220,75 +232,93 @@ void setup() {
     .setPosition(440, 130)
     .updateSize()
     .setSize(100, 20);
-    
+
   /* Stop Motors */
   cp5.addButton("Stop Motor")
     .setValue(STOP_MOTOR_BUTTON)
     .setPosition(550, 130)
     .updateSize()
     .setSize(100, 20);
-  
+
+  /* Start with serial disabled */
+  serialEnabled = false;
+  serialPort = null;
+
+  /* Initialize Serial Buffer */
+  serialBuffer = new byte[MAX_SERIAL_BUFFER];
 }
 
 /* Draw interface */
 void draw() {
 
-  /* Read serial and update values */
-  //if (mockupSerial || serialPort.available() > 0) {
-  if (mockupSerial) {
-    String myString = "";
-    if (!mockupSerial) {
+  /* Read serial and update values if serial is enabled and available or debug serial is enabled */
+  if ((serialEnabled && serialPort.available() > 0) || mockupSerial) {
+    /* String with data received from serial */
+    String dataString = ",";
+
+    /* If mockup Serial was enabled just go ahead */
+    if (mockupSerial) {
+      dataString = mockupSerialFunction();
+    }
+    /* If debug serial was enabled and mockup serial wasn't being used */
+    else if (serialEnabled) {
+      /* Try read data from Serial Port */
       try {
-        //serialPort.readBytesUntil('\r', inBuffer);
+        serialPort.readBytesUntil('\n', serialBuffer);
       }
+      /* Catch exception if it's not possible read from serial */
       catch (Exception e) {
+        errorMsg("ERROR WHILE READING FROM SERIAL PORT, MAYBE YOU DON'T HAVE ENOUGH\n" + 
+          "PRIVILEGES, OR THIS SERIAL IS BEING USED BY ANOTHER PROCCESS");
+        e.printStackTrace();
       }
-      //myString = new String(inBuffer);
-    } else {
-      myString = mockupSerialFunction();
+
+      /* Convert byte buffer to ascii string */
+      dataString = new String(serialBuffer);
     }
 
-    //println(myString);
+    /* Split string received  */
+    String[] dataReceived = split(dataString, ',');
 
-    // split the string at delimiter (space)
-    String[] nums = split(myString, ' ');
+    /* Update lines with content received from Serial Port */
+    for (int i = 0; i < numberOfLines; i++) {
+      /* Shift content in one position */
+      for (int j = 0; j < timeInterval - 1; j++) {
+        lineGraphValues[i][j] = lineGraphValues[i][j + 1];
+      }
 
-    // update line graph
-    for (int i = 0; i < nums.length; i++) {
-      try {
-        if (i < numberOfLines) {
-          for (int k = 0; k < timeInterval - 1; k++) {
-            lineGraphValues[i][k] = lineGraphValues[i][k+1];
-          }
-
-          lineGraphValues[i][lineGraphValues[i].length-1] = float(nums[i]);// * float(getPlotterConfigString("lgMultiplier"+(i+1)));
-        }
-      } 
-      catch (Exception e) {
+      /* Add value received in each line */
+      if(dataReceived.length >= numberOfLines){
+        lineGraphValues[i][timeInterval - 1] = float(dataReceived[i]);
+      }
+      /* Otherwise add a 0 */
+      else{
+        errorMsg("INVALID DATA RECEIVED");
+        lineGraphValues[i][timeInterval - 1] = 0;
       }
     }
-  }
 
-  /* Print Background with white color */
-  background(COLOR_WHITE);
+    /* Print Background with white color */
+    background(COLOR_WHITE);
 
-  /* Check if Serial List has updated */
-  if (serialList != Serial.list()) {
-    /* Update Serial List */
-    serialList = Serial.list();
-    cp5.get(ScrollableList.class, "SerialList")
-      .setItems(serialList);
-  }
+    /* Check if Serial List has updated */
+    if (serialList != Serial.list()) {
+      /* Update Serial List */
+      serialList = Serial.list();
+      cp5.get(ScrollableList.class, "SerialList")
+        .setItems(serialList);
+    }
 
-  /* Print the LineGraph */
-  LineGraph.DrawAxis();
-  for (int i = 0; i < numberOfLines; i++) {
-    /* Check if the line is configured to be displayed */
-    if (displayLine[i]) {
-      /* Chose color of the actual line */
-      LineGraph.GraphColor = graphColors[i];
-      /* Update the graph with the time */
-      LineGraph.LineGraph(lineGraphSampleNumbers, lineGraphValues[i]);
+    /* Print the LineGraph */
+    LineGraph.DrawAxis();
+    for (int i = 0; i < numberOfLines; i++) {
+      /* Check if the line is configured to be displayed */
+      if (displayLine[i]) {
+        /* Chose color of the actual line */
+        LineGraph.GraphColor = graphColors[i];
+        /* Update the graph with the time */
+        LineGraph.LineGraph(lineGraphSampleNumbers, lineGraphValues[i]);
+      }
     }
   }
 }
@@ -328,14 +358,60 @@ void controlEvent(ControlEvent theEvent) {
     /* Check which operations need to be perfomed */
     switch(parameter) {
     case "lgStepsL":
+      infoMsg("CHANGING STATE OF VISIBILITY OF LINE STEPS MOTOR LEFT");
       displayLine[0] = value;
       break;
     case "lgStepsR":
+      infoMsg("CHANGING STATE OF VISIBILITY OF LINE STEPS MOTOR RIGHT");
       displayLine[1] = value;
       break;
     default:
       errorMsg("UNKNOW SWITCH EVENT - " + parameter + " - " + value);
     }
+  } 
+  /* Button event */
+  else if (theEvent.isAssignableFrom(Button.class)) {
+
+    /* Execut action of the clicked button */
+    switch(parameter) {
+    case "Start Motor":
+      /* If serial is enabled send the start message */
+      if (serialEnabled) {
+        // TODO
+        infoMsg("SENDING START MESSAGE TO ROBOT");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "Stop Motor":
+      /* If serial is enabled send the stop message */
+      if (serialEnabled) {
+        // TODO
+        infoMsg("SENDING START MESSAGE TO ROBOT");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    default:
+      errorMsg("UNKNOW BUTTON EVENT - " + parameter);
+    }
+  }
+  /* Dropdown list event */
+  else if (theEvent.isAssignableFrom(ScrollableList.class)) {
+    /* Get Value of scrollable list clicked */
+    String value = theEvent.getStringValue();
+
+    switch(parameter) {
+    case "SerialList":
+      infoMsg("SERIAL PORT - " + value + " - SELECTED");
+      break;
+    default:
+      errorMsg("UNKNOW SCROLLABLE LIST EVENT - " + parameter);
+    }
+  }
+  /* Unused Events */
+  else {
+    warningMsg("UNUSED EVENT DETECTED");
   }
 }
 

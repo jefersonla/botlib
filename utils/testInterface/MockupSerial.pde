@@ -25,6 +25,9 @@ The MIT License (MIT)
 // If you want to debug the plotter without using a real serial port
 int mockupValue = 0;
 int mockupDirection = 10;
+final char mockupDelimiter = ',';
+final char mockupEnd = '\n';
+
 String mockupSerialFunction() {
   mockupValue = (mockupValue + mockupDirection);
   if (mockupValue > 100)
@@ -35,26 +38,26 @@ String mockupSerialFunction() {
   for (int i = 0; i<6; i++) {
     switch (i) {
     case 0:
-      r += mockupValue+" ";
+      r += mockupValue + mockupDelimiter;
       break;
     case 1:
-      r += 100*cos(mockupValue*(2*3.14)/1000)+" ";
+      r += 100*cos(mockupValue*(2*3.14)/1000) + mockupDelimiter;
       break;
     case 2:
-      r += mockupValue/4+" ";
+      r += mockupValue/4 + mockupDelimiter;
       break;
     case 3:
-      r += mockupValue/8+" ";
+      r += mockupValue/8 + mockupDelimiter;
       break;
     case 4:
-      r += mockupValue/16+" ";
+      r += mockupValue/16 + mockupDelimiter;
       break;
     case 5:
-      r += mockupValue/32+" ";
+      r += mockupValue/32 + mockupDelimiter;
       break;
     }
     if (i < 7)
-      r += '\r';
+      r += mockupEnd;
   }
   delay(10);
   return r;
