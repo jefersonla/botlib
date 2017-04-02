@@ -131,8 +131,8 @@ void setup() {
   }
 
   /* Resize Y axis limits input */
-  int xAxisLineGraph = 180;
-  int yAxisLineGraph = 195;
+  int xAxisLineGraph = 190;
+  int yAxisLineGraph = 208;
   int inputWidth = 40;
   cp5.addTextfield("lgMaxY")
     .setPosition(xAxisLineGraph, yAxisLineGraph)
@@ -197,7 +197,7 @@ void setup() {
     .setText("Serial List")
     .setPosition(673, 115)
     .setColor(0);
-  cp5.addScrollableList("Serial List")
+  cp5.addScrollableList("SerialList")
     .setPosition(673, 130)
     .setSize(100, 200)
     .setBarHeight(20)
