@@ -39,8 +39,8 @@ volatile double kpEsquerda = 0;
 
 //volatile int velocidadeDireita = 120;
 //volatile int velocidadeEsquerda = 130;
-volatile int velocidadeDireita = 580;
-volatile int velocidadeEsquerda = 800;
+volatile int velocidadeDireita = 800;
+volatile int velocidadeEsquerda = 655;
 
 volatile int pwmDireita = 0;
 volatile int pwmEsquerda = 0;
@@ -78,7 +78,8 @@ void loop() {
     delay(5);
     char serialLido[20];
     strncpy(serialLido, Serial.readStringUntil('\n').c_str(), 20);
-    float valor;
+    float valor_float;
+    int valor_int;
     switch (serialLido[0]) {
       case 'I':
         motoresAtivados = true;
@@ -95,8 +96,13 @@ void loop() {
       case 'L':
         switch (serialLido[1]) {
           case 'P':
-            valor = atof(&serialLido[3]);
-            kpEsquerda = valor;
+            valor_float = atof(&serialLido[3]);
+            kpEsquerda = valor_float;
+            break;
+          case 'S':
+            valor_int = atoi(&serialLido[3]);
+            velocidadeEsquerda = valor_int;
+            ACELERA_ESQUERDA(velocidadeEsquerda);
             break;
           default:
             Serial.print("CODE UNRECOGNIZED 2 ");
@@ -106,8 +112,13 @@ void loop() {
       case 'R':
         switch (serialLido[1]) {
           case 'P':
-            valor = atof(&serialLido[3]);
-            kpDireita = valor;
+            valor_float = atof(&serialLido[3]);
+            kpDireita = valor_float;
+            break;
+          case 'S':
+            valor_int = atoi(&serialLido[3]);
+            velocidadeDireita = valor_int;
+            ACELERA_DIREITA(velocidadeDireita);
             break;
           default:
             Serial.print("CODE UNRECOGNIZED 2 ");

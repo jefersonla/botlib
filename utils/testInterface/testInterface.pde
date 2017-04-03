@@ -194,6 +194,34 @@ void setup() {
     .setPosition(labelXPos, labelYPos + 49)
     .setColor(0);
 
+  /* Static Speed */
+  int labelXPos1 = 10;
+  int labelYPos1 = 250;
+  int gainXPos1 = 30;
+  int gainYPos1 = 260;
+  cp5.addTextlabel("Static Speed")
+    .setText("Speed")
+    .setPosition(labelXPos1 + 75, labelYPos1)
+    .setColor(0);
+  cp5.addTextlabel("RightMark")
+    .setText("R")
+    .setPosition(labelXPos1, labelYPos1 + 20)
+    .setColor(0);
+  cp5.addTextlabel("LeftMark")
+    .setText("L")
+    .setPosition(labelXPos1, labelYPos1 + 49)
+    .setColor(0);
+  cp5.addTextfield("RightSpeed")
+    .setPosition(gainXPos1 + 52, gainYPos1)
+    .setText("800")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+  cp5.addTextfield("LeftSpeed")
+    .setPosition(gainXPos1 + 52, gainYPos1 + 30)
+    .setText("655")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+
   /* Enable graphic visualization of each steps counter */
   int gainXPos = 30;
   int gainYPos = 174;
@@ -373,6 +401,24 @@ void controlEvent(ControlEvent theEvent) {
 
     /* Now change parameters accordily */
     switch(parameter) {
+    case "RightSpeed":
+      infoMsg("SETTING A NEW SPEED ON RIGH SIDE");
+      if (serialEnabled) {
+        serialPort.write("RS:" + value + "\n");
+        infoMsg("SENDING NEW SPEED (" + value + ") TO LEFT SIDE");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+    break;
+    case "LeftSpeed":
+      infoMsg("SETTING A NEW SPEED ON LEFT SIDE");
+      if (serialEnabled) {
+        serialPort.write("LS:" + value + "\n");
+        infoMsg("SENDING NEW SPEED (" + value + ") TO LEFT SIDE");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+    break;
     case "lgMaxY": 
       LineGraph.yMax = float(value);
       infoMsg("UPDATING MAX LIMIT OF LINE GRAPH");
@@ -489,9 +535,9 @@ void controlEvent(ControlEvent theEvent) {
         errorMsg("CANNOT CONNECT TO SERIAL PORT " + serialList[value] + ", \n" + 
           "PROBABLY YOU DON'T HAVE ENOUGH PRIVILEGES, " + 
           "OR THIS INTERFACE IS BEING USED BY ANOTHER PROGRAM");
-        
+
         /* Close Serial Port before make it null */
-        if(serialPort != null){
+        if (serialPort != null) {
           serialPort.stop();
         }
         serialPort = null;
