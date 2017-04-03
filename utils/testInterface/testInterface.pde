@@ -97,9 +97,6 @@ byte[] serialBuffer;
 /* Logo Image */
 PImage logo;
 
- /* Variables to getText from TextField*/
-String direita, esquerda;
- 
 /* Setup Interface */
 void setup() {
   /* Create Interface */
@@ -387,8 +384,7 @@ void controlEvent(ControlEvent theEvent) {
     case "pGainL":
       infoMsg("SETTING A NEW P GAIN ON LEFT SIDE");
       if (serialEnabled) {
-        esquerda = cp5.get(Textfield.class,"pGainL").getText();
-        serialPort.write(esquerda);
+        serialPort.write("LP:" + value + "\n");
         infoMsg("SENDING NEW P GAIN TO LEFT SIDE");
       } else {
         warningMsg("SERIAL NOT CONECTED");
@@ -397,8 +393,7 @@ void controlEvent(ControlEvent theEvent) {
     case "pGainR":
       infoMsg("SETTING A NEW P GAIN ON RIGHT SIDE");
       if (serialEnabled) {
-        direita = cp5.get(Textfield.class,"pGainR").getText();
-        serialPort.write(direita);
+        serialPort.write("LR:" + value + "\n");
         infoMsg("SENDING NEW P GAIN TO RIGHT SIDE");
       } else {
         warningMsg("SERIAL NOT CONECTED");
@@ -495,6 +490,8 @@ void controlEvent(ControlEvent theEvent) {
           "PROBABLY YOU DON'T HAVE ENOUGH PRIVILEGES, " + 
           "OR THIS INTERFACE IS BEING USED BY ANOTHER PROGRAM");
         serialPort = null;
+        cp5.get(Toggle.class, "seEn")
+          .setValue(false);
       }
       break;
     default:
