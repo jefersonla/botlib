@@ -45,9 +45,11 @@ volatile int pwmEsquerda = 0;
 
 volatile bool motoresAtivados = false;
 
+volatile int contador = 0;
+
 void setup() {
-  Serial.begin(9600);
-  
+  Serial.begin(115200);
+
   pinMode(ACELERADOR_DIREITA, OUTPUT);
   pinMode(ACELERADOR_ESQUERDA, OUTPUT);
   pinMode(LUZ_ACELERADOR_DIREITA, OUTPUT);
@@ -62,48 +64,63 @@ void setup() {
 
   attachInterrupt(digitalPinToInterrupt(INTERROMPE_DIREITA), contadorDireita, CHANGE);
   attachInterrupt(digitalPinToInterrupt(INTERROMPE_ESQUERDA), contadorEsquerda, CHANGE);
-  
+
   Timer1.initialize(1000000 / 10);
-  Timer1.attachInterrupt(ajustaMotor); 
+  Timer1.attachInterrupt(ajustaMotor);
 }
 
 void loop() {
-  contaDireita = 0;
-  contaEsquerda = 0;
-  ACELERA_DIREITA(velocidadeDireita);
-  ACELERA_ESQUERDA(velocidadeEsquerda);
-  IR_PARA_FRENTE();
-  motoresAtivados = true;
-  delay(1000);
-  motoresAtivados = false;
-  Serial.print(contaDireita);
-  Serial.print(",");
-  Serial.println(contaEsquerda);
-  FREIO();
-  delay(1500);
+  if (Serial.available() > 0) {
+    char leSerial = Serial.read();
+    switch (leSerial) {
+      case 'I':
+        motoresAtivados = true;
+        contaDireita = 0;
+        contaEsquerda = 0;
+        ACELERA_DIREITA(velocidadeDireita);
+        ACELERA_ESQUERDA(velocidadeEsquerda);
+        IR_PARA_FRENTE();
+        break;
+      case 'S':
+        motoresAtivados = false;
+        FREIO();
+        break;
+      default:
+        Serial.println("CODE UNRECOGNIZED");
+    }
+  }
 }
 
-void ajustaMotor(){
-  if(motoresAtivados){
-    if(contaDireita > contaEsquerda){
+void ajustaMotor() {
+  if (motoresAtivados) {
+    if (contaDireita > contaEsquerda) {
       pwmEsquerda += kpEsquerda * (contaDireita - contaEsquerda);
     }
-    else if(contaEsquerda > contaDireita){
+    else if (contaEsquerda > contaDireita) {
       pwmDireita += kpDireita * (contaEsquerda - contaDireita);
     }
-    
+
     //ACELERA_DIREITA(pwmDireita);
     //ACELERA_ESQUERDA(pwmEsquerda);
     velocidadeDireita += pwmDireita;
     velocidadeEsquerda += pwmEsquerda;
   }
+  if (contador == 10) {
+    contador = 0;
+    Serial.print(contaDireita);
+    Serial.print(",");
+    Serial.println(contaEsquerda);
+    contaDireita = 0;
+    contaEsquerda = 0;
+  }
+  contador++;
 }
 
-void contadorDireita(){
+void contadorDireita() {
   contaDireita++;
 }
 
-void contadorEsquerda(){
+void contadorEsquerda() {
   contaEsquerda++;
 }
 

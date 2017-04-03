@@ -19,11 +19,11 @@
 /* Step speed intervals between seconds */
 #define ADJUST_MOTOR_INTERVAL 20
 
-/* 
- *                   !!!!! WARNING !!!!!
- *  TAKE CARE WHILE CHOOSING THIS SINCE A STEP SPEED OF 120, 
- *   RESULT IN 4 COMPLETE ROTATIONS OF EACH WHEEL BY SECOND
- */
+/*
+                     !!!!! WARNING !!!!!
+    TAKE CARE WHILE CHOOSING THIS SINCE A STEP SPEED OF 120,
+     RESULT IN 4 COMPLETE ROTATIONS OF EACH WHEEL BY SECOND
+*/
 
 /* Default speeds */
 
@@ -67,21 +67,21 @@ typedef volatile bool mutex;
 /* Wait while some mutex are locked */
 #define await(MUTEX_NAME) while(MUTEX_NAME)
 
-/* 
- *                  !!!!! WARNING !!!!!
- *     DON'T FORGET TO DEFINE MUTEX AS 'volatile bool'! 
- *       DESPITE OF THAT YOU CAN USE MUTEX TYPE TOO
- */
+/*
+                    !!!!! WARNING !!!!!
+       DON'T FORGET TO DEFINE MUTEX AS 'volatile bool'!
+         DESPITE OF THAT YOU CAN USE MUTEX TYPE TOO
+*/
 
 /* Grid Movimentation  */
 
 /* Grid Size */
 #define GRID_SIZE         20
 
-/* 
- *                   !!!!! WARNING !!!!!
- *           GRIDS SHOULDN'T BE GREATER THAN 35! 
- *  A 35x35 CONSUMES 1225 BYTES AND MIGHT BREAK EVERYTHING!
- */
+/*
+                     !!!!! WARNING !!!!!
+             GRIDS SHOULDN'T BE GREATER THAN 35!
+    A 35x35 CONSUMES 1225 BYTES AND MIGHT BREAK EVERYTHING!
+*/
 
 #endif
