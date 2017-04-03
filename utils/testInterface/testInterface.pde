@@ -55,8 +55,8 @@ final int STOP_MOTOR_BUTTON = 2;
 final int SERIAL_SPEED = 115200;
 
 /* Messages to send */
-final String START_MOTOR_MSG = "I";
-final String STOP_MOTOR_MSG = "S";
+final String START_MOTOR_MSG = "I\n";
+final String STOP_MOTOR_MSG = "S\n";
 
 /* P5 Controller */
 ControlP5 cp5;
@@ -489,6 +489,11 @@ void controlEvent(ControlEvent theEvent) {
         errorMsg("CANNOT CONNECT TO SERIAL PORT " + serialList[value] + ", \n" + 
           "PROBABLY YOU DON'T HAVE ENOUGH PRIVILEGES, " + 
           "OR THIS INTERFACE IS BEING USED BY ANOTHER PROGRAM");
+        
+        /* Close Serial Port before make it null */
+        if(serialPort != null){
+          serialPort.stop();
+        }
         serialPort = null;
         cp5.get(Toggle.class, "seEn")
           .setValue(false);
