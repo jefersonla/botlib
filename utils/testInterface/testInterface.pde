@@ -124,7 +124,7 @@ void setup() {
 
   /* Num. of div. of Y axis / Max of Y axis / Min of Y axis */
   LineGraph.yDiv = 10;
-  LineGraph.yMax = 400;
+  LineGraph.yMax = 100;
   LineGraph.yMin = 0;
 
   /* Configurations of plot of LineGraph */
@@ -165,7 +165,7 @@ void setup() {
   int inputWidth = 40;
   cp5.addTextfield("lgMaxY")
     .setPosition(xAxisLineGraph, yAxisLineGraph)
-    .setText("400")
+    .setText("100")
     .setWidth(inputWidth)
     .setAutoClear(false);
   cp5.addTextfield("lgMinY")
@@ -203,22 +203,22 @@ void setup() {
     .setText("Speed")
     .setPosition(labelXPos1 + 75, labelYPos1)
     .setColor(0);
-  cp5.addTextlabel("RightMark")
-    .setText("R")
-    .setPosition(labelXPos1, labelYPos1 + 20)
-    .setColor(0);
   cp5.addTextlabel("LeftMark")
     .setText("L")
+    .setPosition(labelXPos1, labelYPos1 + 20)
+    .setColor(0);
+  cp5.addTextlabel("RightMark")
+    .setText("R")
     .setPosition(labelXPos1, labelYPos1 + 49)
     .setColor(0);
-  cp5.addTextfield("RightSpeed")
+  cp5.addTextfield("LeftSpeed")
     .setPosition(gainXPos1 + 52, gainYPos1)
     .setText("800")
     .setWidth(inputWidth)
     .setAutoClear(false);
-  cp5.addTextfield("LeftSpeed")
+  cp5.addTextfield("RightSpeed")
     .setPosition(gainXPos1 + 52, gainYPos1 + 30)
-    .setText("655")
+    .setText("870")
     .setWidth(inputWidth)
     .setAutoClear(false);
 

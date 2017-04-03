@@ -40,7 +40,7 @@ volatile double kpEsquerda = 0;
 //volatile int velocidadeDireita = 120;
 //volatile int velocidadeEsquerda = 130;
 volatile int velocidadeDireita = 800;
-volatile int velocidadeEsquerda = 655;
+volatile int velocidadeEsquerda = 870;
 
 volatile int pwmDireita = 0;
 volatile int pwmEsquerda = 0;
