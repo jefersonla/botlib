@@ -97,6 +97,9 @@ byte[] serialBuffer;
 /* Logo Image */
 PImage logo;
 
+ /* Variables to getText from TextField*/
+String direita, esquerda;
+ 
 /* Setup Interface */
 void setup() {
   /* Create Interface */
@@ -384,7 +387,9 @@ void controlEvent(ControlEvent theEvent) {
     case "pGainL":
       infoMsg("SETTING A NEW P GAIN ON LEFT SIDE");
       if (serialEnabled) {
-        //TODO
+        esquerda = cp5.get(Textfield.class,"pGainL").getText();
+        serialPort.write(esquerda);
+        infoMsg("SENDING NEW P GAIN TO LEFT SIDE");
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }
@@ -392,7 +397,9 @@ void controlEvent(ControlEvent theEvent) {
     case "pGainR":
       infoMsg("SETTING A NEW P GAIN ON RIGHT SIDE");
       if (serialEnabled) {
-        //TODO
+        direita = cp5.get(Textfield.class,"pGainR").getText();
+        serialPort.write(direita);
+        infoMsg("SENDING NEW P GAIN TO RIGHT SIDE");
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }
