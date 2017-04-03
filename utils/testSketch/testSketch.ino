@@ -1,4 +1,5 @@
 #include <TimerOne.h>
+#include <PID_v1.h>
 
 #define INTERROMPE_DIREITA 3
 #define INTERROMPE_ESQUERDA 2
@@ -42,14 +43,24 @@ volatile double kpEsquerda = 0;
 volatile int velocidadeDireita = 800;
 volatile int velocidadeEsquerda = 870;
 
-volatile int pwmDireita = 0;
-volatile int pwmEsquerda = 0;
+volatile double pwmDireita = 0;
+volatile double pwmEsquerda = 0;
 
 volatile bool motoresAtivados = false;
 
 volatile int contador = 0;
 
 volatile int girosDesejados = 150;
+
+//Define Variables we'll be connecting to
+double entradaEsquerda, entradaDireita;
+double objetivo = 80;
+
+//Specify the links and initial tuning parameters
+PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo,kpEsquerda,0,0, DIRECT);
+
+//Specify the links and initial tuning parameters
+PID motorDireito(&entradaDireita, &pwmDireita, &objetivo,kpDireita,0,0, DIRECT);
 
 void setup() {
   Serial.begin(115200);
@@ -71,6 +82,12 @@ void setup() {
 
   Timer1.initialize(1000000 / 10);
   Timer1.attachInterrupt(ajustaMotor);
+
+  motorEsquerdo.SetMode(AUTOMATIC);
+  motorDireito.SetMode(AUTOMATIC);
+  motorEsquerdo.SetOutputLimits(0, 1023); 
+  motorDireito.SetSampleTime(1000/10); 
+  motorEsquerdo.SetSampleTime(1000/10); 
 }
 
 void loop() {
@@ -98,6 +115,7 @@ void loop() {
           case 'P':
             valor_float = atof(&serialLido[3]);
             kpEsquerda = valor_float;
+            motorEsquerdo.SetTunings(kpEsquerda, 0, 0);
             break;
           case 'S':
             valor_int = atoi(&serialLido[3]);
@@ -114,6 +132,7 @@ void loop() {
           case 'P':
             valor_float = atof(&serialLido[3]);
             kpDireita = valor_float;
+            motorDireito.SetTunings(kpDireita, 0, 0);
             break;
           case 'S':
             valor_int = atoi(&serialLido[3]);
@@ -134,10 +153,14 @@ void loop() {
 
 void ajustaMotor() {
   if (motoresAtivados) {
-    pwmEsquerda += kpEsquerda * (contaEsquerda - (girosDesejados / 10));
-    //ACELERA_ESQUERDA(pwmEsquerda);
-    pwmDireita += kpDireita * (contaDireita - (girosDesejados / 10));
-    //ACELERA_DIREITA(pwmDireita);
+    //pwmEsquerda += kpEsquerda * (contaEsquerda - (girosDesejados / 10));
+    entradaEsquerda = contaEsquerda;
+    motorEsquerdo.Compute();
+    ACELERA_ESQUERDA(pwmEsquerda);
+    //pwmDireita += kpDireita * (contaDireita - (girosDesejados / 10));
+    entradaDireita = contaDireita;
+    motorDireito.Compute();
+    ACELERA_DIREITA(pwmDireita);
   }
   if (contador == 10) {
     contador = 0;
