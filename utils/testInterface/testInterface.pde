@@ -385,7 +385,7 @@ void controlEvent(ControlEvent theEvent) {
       infoMsg("SETTING A NEW P GAIN ON LEFT SIDE");
       if (serialEnabled) {
         serialPort.write("LP:" + value + "\n");
-        infoMsg("SENDING NEW P GAIN TO LEFT SIDE");
+        infoMsg("SENDING NEW P GAIN (" + value + ") TO LEFT SIDE");
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }
@@ -393,8 +393,8 @@ void controlEvent(ControlEvent theEvent) {
     case "pGainR":
       infoMsg("SETTING A NEW P GAIN ON RIGHT SIDE");
       if (serialEnabled) {
-        serialPort.write("LR:" + value + "\n");
-        infoMsg("SENDING NEW P GAIN TO RIGHT SIDE");
+        serialPort.write("RP:" + value + "\n");
+        infoMsg("SENDING NEW P GAIN (" + value + ") TO RIGHT SIDE");
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }

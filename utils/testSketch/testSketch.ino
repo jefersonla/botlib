@@ -71,8 +71,11 @@ void setup() {
 
 void loop() {
   if (Serial.available() > 0) {
-    char leSerial = Serial.read();
-    switch (leSerial) {
+    delay(5);
+    char serialLido[20];
+    strncpy(serialLido, Serial.readStringUntil('\n').c_str(), 20);
+    float valor;
+    switch (serialLido[0]) {
       case 'I':
         motoresAtivados = true;
         contaDireita = 0;
@@ -85,8 +88,31 @@ void loop() {
         motoresAtivados = false;
         FREIO();
         break;
+      case 'L':
+        switch (serialLido[1]) {
+          case 'P':
+            valor = atof(&serialLido[3]);
+            kpEsquerda = valor;
+            break;
+          default:
+            Serial.print("CODE UNRECOGNIZED 2 ");
+            Serial.println(serialLido[1]);
+        }
+        break;
+      case 'R':
+        switch (serialLido[1]) {
+          case 'P':
+            valor = atof(&serialLido[3]);
+            kpDireita = valor;
+            break;
+          default:
+            Serial.print("CODE UNRECOGNIZED 2 ");
+            Serial.println(serialLido[1]);
+        }
+        break;
       default:
-        Serial.println("CODE UNRECOGNIZED");
+        Serial.print("CODE UNRECOGNIZED 1 ");
+        Serial.println(serialLido[0]);
     }
   }
 }
@@ -95,15 +121,12 @@ void ajustaMotor() {
   if (motoresAtivados) {
     if (contaDireita > contaEsquerda) {
       pwmEsquerda += kpEsquerda * (contaDireita - contaEsquerda);
+      ACELERA_DIREITA(pwmDireita);
     }
     else if (contaEsquerda > contaDireita) {
       pwmDireita += kpDireita * (contaEsquerda - contaDireita);
+      ACELERA_ESQUERDA(pwmEsquerda);
     }
-
-    //ACELERA_DIREITA(pwmDireita);
-    //ACELERA_ESQUERDA(pwmEsquerda);
-    velocidadeDireita += pwmDireita;
-    velocidadeEsquerda += pwmEsquerda;
   }
   if (contador == 10) {
     contador = 0;
