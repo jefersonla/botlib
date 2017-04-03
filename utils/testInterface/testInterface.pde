@@ -124,7 +124,7 @@ void setup() {
 
   /* Num. of div. of Y axis / Max of Y axis / Min of Y axis */
   LineGraph.yDiv = 10;
-  LineGraph.yMax = 250;
+  LineGraph.yMax = 400;
   LineGraph.yMin = 0;
 
   /* Configurations of plot of LineGraph */
@@ -165,7 +165,7 @@ void setup() {
   int inputWidth = 40;
   cp5.addTextfield("lgMaxY")
     .setPosition(xAxisLineGraph, yAxisLineGraph)
-    .setText("250")
+    .setText("400")
     .setWidth(inputWidth)
     .setAutoClear(false);
   cp5.addTextfield("lgMinY")
