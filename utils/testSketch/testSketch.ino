@@ -154,13 +154,13 @@ void loop() {
 void ajustaMotor() {
   if (motoresAtivados) {
     //pwmEsquerda += kpEsquerda * (contaEsquerda - (girosDesejados / 10));
-    entradaEsquerda = contaEsquerda;
-    motorEsquerdo.Compute();
-    ACELERA_ESQUERDA(pwmEsquerda);
+    //entradaEsquerda = contaEsquerda;
+    //motorEsquerdo.Compute();
+    //ACELERA_ESQUERDA(pwmEsquerda);
     //pwmDireita += kpDireita * (contaDireita - (girosDesejados / 10));
-    entradaDireita = contaDireita;
-    motorDireito.Compute();
-    ACELERA_DIREITA(pwmDireita);
+    //entradaDireita = contaDireita;
+    //motorDireito.Compute();
+    //ACELERA_DIREITA(pwmDireita);
   }
   if (contador == 10) {
     contador = 0;
