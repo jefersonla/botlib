@@ -35,16 +35,18 @@
 volatile int contaDireita = 0;
 volatile int contaEsquerda = 0;
 
-volatile double kpDireita = 0;
-volatile double kpEsquerda = 0;
+double kpDireita = 0;
+double kpEsquerda = 0;
 
 //volatile int velocidadeDireita = 120;
 //volatile int velocidadeEsquerda = 130;
-volatile int velocidadeDireita = 800;
-volatile int velocidadeEsquerda = 870;
+//volatile int velocidadeDireita = 800;
+//volatile int velocidadeEsquerda = 870;
+volatile int velocidadeDireita = 540;
+volatile int velocidadeEsquerda = 600;
 
-volatile double pwmDireita = 0;
-volatile double pwmEsquerda = 0;
+double pwmDireita = 0;
+double pwmEsquerda = 0;
 
 volatile bool motoresAtivados = false;
 
@@ -54,13 +56,13 @@ volatile int girosDesejados = 150;
 
 //Define Variables we'll be connecting to
 double entradaEsquerda, entradaDireita;
-double objetivo = 80;
+double objetivo = 100;
 
 //Specify the links and initial tuning parameters
-PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo,kpEsquerda,0,0, DIRECT);
+PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda,0,0, DIRECT);
 
 //Specify the links and initial tuning parameters
-PID motorDireito(&entradaDireita, &pwmDireita, &objetivo,kpDireita,0,0, DIRECT);
+PID motorDireito(&entradaDireita, &pwmDireita, &objetivo, kpDireita,0,0, DIRECT);
 
 void setup() {
   Serial.begin(115200);
@@ -180,4 +182,3 @@ void contadorDireita() {
 void contadorEsquerda() {
   contaEsquerda++;
 }
-
