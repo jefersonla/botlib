@@ -466,21 +466,21 @@ void draw() {
           /* Populate interface with all params received */
           infoMsg("ALL PARAMS RECEIVED");
           cp5.get(Textfield.class, "pGainL")
-            .setValue(float(dataReceived[4]));
+            .setValue(dataReceived[4]);
           cp5.get(Textfield.class, "iGainL")
-            .setValue(float(dataReceived[5]));
+            .setValue(dataReceived[5]);
           cp5.get(Textfield.class, "dGainL")
-            .setValue(float(dataReceived[6]));
+            .setValue(dataReceived[6]);
           cp5.get(Textfield.class, "pGainR")
-            .setValue(float(dataReceived[7]));
+            .setValue(dataReceived[7]);
           cp5.get(Textfield.class, "iGainR")
-            .setValue(float(dataReceived[8]));
+            .setValue(dataReceived[8]);
           cp5.get(Textfield.class, "dGainR")
-            .setValue(float(dataReceived[9]));
+            .setValue(dataReceived[9]);
           cp5.get(Textfield.class, "LeftSpeed")
-            .setValue(int(dataReceived[10]));
+            .setValue(dataReceived[10]);
           cp5.get(Textfield.class, "RightSpeed")
-            .setValue(int(dataReceived[11]));
+            .setValue(dataReceived[11]);
           break;
         default:
           errorMsg("INVALID LIST OF PARAMS RECEIVED. CODE - " + dataReceived[1]);
