@@ -35,8 +35,8 @@
 volatile int contaDireita = 0;
 volatile int contaEsquerda = 0;
 
-double kpDireita = 0;
-double kpEsquerda = 0;
+double kpDireita = 5;
+double kpEsquerda = 6;
 
 //volatile int velocidadeDireita = 120;
 //volatile int velocidadeEsquerda = 130;
@@ -59,7 +59,7 @@ volatile int girosDesejados = 150;
 
 //Define Variables we'll be connecting to
 double entradaEsquerda, entradaDireita;
-double objetivo = 50;
+double objetivo = 150;
 
 //Specify the links and initial tuning parameters
 PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda, 0, 0, DIRECT);
