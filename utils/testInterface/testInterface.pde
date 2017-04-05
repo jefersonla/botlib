@@ -45,7 +45,13 @@ final color COLOR_GREEN_LIGHT = color(232, 158, 12);
 final color COLOR_RED = color(255, 0, 0);
 final color COLOR_PURPLE = color(62, 12, 232);
 final color COLOR_BLUE_LIGHT = color(13, 255, 243);
-final color COLOR_PINK = color(200, 46, 232);
+final color COLOR_PURPLE_LIGH = color(200, 46, 232);
+
+/* Vector position names */
+final int GRAPH_STEPS_LEFT = 0;
+final int GRAPH_STEPS_RIGHT = 1;
+final int GRAPH_PWM_LEFT = 2;
+final int GRAPH_PWM_RIGHT = 3;
 
 /* Buttons */
 final int START_MOTOR_BUTTON = 1;
@@ -62,7 +68,7 @@ final String STOP_MOTOR_MSG = "S\n";
 ControlP5 cp5;
 
 /* Number of lines in LineGraph */
-final int numberOfLines = 2;
+final int numberOfLines = 4;
 
 /* Time Interval */
 final int timeInterval = 60;
@@ -131,8 +137,10 @@ void setup() {
 
   /* Colors of the LineGraph */
   graphColors = new color[numberOfLines];
-  graphColors[0] = COLOR_ORANGE_LIGHT;
-  graphColors[1] = COLOR_GREEN_LIGHT;
+  graphColors[GRAPH_STEPS_LEFT] = COLOR_ORANGE_LIGHT;
+  graphColors[GRAPH_STEPS_RIGHT] = COLOR_GREEN_LIGHT;
+  graphColors[GRAPH_PWM_LEFT] = COLOR_RED;
+  graphColors[GRAPH_PWM_RIGHT] = COLOR_BLUE_LIGHT;
 
   /* Array of values of the LineGraph */
   lineGraphValues = new float[numberOfLines][timeInterval];
@@ -194,34 +202,6 @@ void setup() {
     .setPosition(labelXPos, labelYPos + 49)
     .setColor(0);
 
-  /* Static Speed */
-  int labelXPos1 = 10;
-  int labelYPos1 = 250;
-  int gainXPos1 = 30;
-  int gainYPos1 = 260;
-  cp5.addTextlabel("Static Speed")
-    .setText("Speed")
-    .setPosition(labelXPos1 + 75, labelYPos1)
-    .setColor(0);
-  cp5.addTextlabel("LeftMark")
-    .setText("L")
-    .setPosition(labelXPos1, labelYPos1 + 20)
-    .setColor(0);
-  cp5.addTextlabel("RightMark")
-    .setText("R")
-    .setPosition(labelXPos1, labelYPos1 + 49)
-    .setColor(0);
-  cp5.addTextfield("LeftSpeed")
-    .setPosition(gainXPos1 + 52, gainYPos1)
-    .setText("800")
-    .setWidth(inputWidth)
-    .setAutoClear(false);
-  cp5.addTextfield("RightSpeed")
-    .setPosition(gainXPos1 + 52, gainYPos1 + 30)
-    .setText("870")
-    .setWidth(inputWidth)
-    .setAutoClear(false);
-
   /* Enable graphic visualization of each steps counter */
   int gainXPos = 30;
   int gainYPos = 174;
@@ -246,6 +226,104 @@ void setup() {
   cp5.addTextfield("pGainR")
     .setPosition(gainXPos + 52, gainYPos + 30)
     .setText("1.0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+
+  /* I Gain */
+  int labelXPos2 = 10;
+  int labelYPos2 = 240;
+  int gainXPos2 = 30;
+  int gainYPos2 = 250;
+  cp5.addTextlabel("LeftMark2")
+    .setText("L")
+    .setPosition(labelXPos2, labelYPos2 + 15)
+    .setColor(0);
+  cp5.addTextlabel("RightMark2")
+    .setText("R")
+    .setPosition(labelXPos2, labelYPos2 + 44)
+    .setColor(0);
+  cp5.addTextlabel("I Gain")
+    .setText("I Gain")
+    .setPosition(labelXPos2 + 77, labelYPos2 - 5)
+    .setColor(0);
+  cp5.addTextfield("iGainL")
+    .setPosition(gainXPos2 + 52, gainYPos2)
+    .setText("1.0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+  cp5.addTextfield("iGainR")
+    .setPosition(gainXPos2 + 52, gainYPos2 + 30)
+    .setText("1.0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+
+  /* D Gain */
+  int labelXPos3 = 10;
+  int labelYPos3 = 315;
+  int gainXPos3 = 30;
+  int gainYPos3 = 325;
+  cp5.addTextlabel("LeftMark3")
+    .setText("L")
+    .setPosition(labelXPos3, labelYPos3 + 15)
+    .setColor(0);
+  cp5.addTextlabel("RightMark3")
+    .setText("R")
+    .setPosition(labelXPos3, labelYPos3 + 44)
+    .setColor(0);
+  cp5.addTextlabel("D Gain")
+    .setText("D Gain")
+    .setPosition(labelXPos3 + 77, labelYPos3 - 5)
+    .setColor(0);
+  cp5.addTextfield("dGainL")
+    .setPosition(gainXPos3 + 52, gainYPos3)
+    .setText("1.0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+  cp5.addTextfield("dGainR")
+    .setPosition(gainXPos3 + 52, gainYPos3 + 30)
+    .setText("1.0")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+
+  /* Static Speed */
+  int labelXPos1 = 10;
+  int labelYPos1 = 450;
+  int gainXPos1 = 30;
+  int gainYPos1 = 460;
+  cp5.addTextlabel("LeftMark")
+    .setText("L")
+    .setPosition(labelXPos1, labelYPos1 + 15)
+    .setColor(0);
+  cp5.addTextlabel("RightMark")
+    .setText("R")
+    .setPosition(labelXPos1, labelYPos1 + 44)
+    .setColor(0);
+  cp5.addTextlabel("on/off1")
+    .setText("on/off")
+    .setPosition(labelXPos1 + 25, labelYPos1 - 5)
+    .setColor(0);
+  cp5.addTextlabel("Static Speed")
+    .setText("PWM")
+    .setPosition(labelXPos1 + 77, labelYPos1 - 5)
+    .setColor(0);
+  cp5.addToggle("lgPWML")
+    .setPosition(gainXPos1, gainYPos1)
+    .setValue(true)
+    .setMode(ControlP5.SWITCH)
+    .setColorActive(graphColors[2]);
+  cp5.addToggle("lgPWMR")
+    .setPosition(gainXPos1, gainYPos1 + 30)
+    .setValue(true)
+    .setMode(ControlP5.SWITCH)
+    .setColorActive(graphColors[3]);
+  cp5.addTextfield("LeftSpeed")
+    .setPosition(gainXPos1 + 52, gainYPos1)
+    .setText("800")
+    .setWidth(inputWidth)
+    .setAutoClear(false);
+  cp5.addTextfield("RightSpeed")
+    .setPosition(gainXPos1 + 52, gainYPos1 + 30)
+    .setText("870")
     .setWidth(inputWidth)
     .setAutoClear(false);
 
@@ -445,6 +523,42 @@ void controlEvent(ControlEvent theEvent) {
         warningMsg("SERIAL NOT CONECTED");
       }
       break;
+    case "iGainR":
+      infoMsg("SETTING A NEW I GAIN ON LEFT SIDE");
+      if (serialEnabled) {
+        serialPort.write("LI:" + value + "\n");
+        infoMsg("SENDING NEW I GAIN (" + value + ") TO RIGHT SIDE");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "iGainL":
+      infoMsg("SETTING A NEW I GAIN ON RIGHT SIDE");
+      if (serialEnabled) {
+        serialPort.write("RI:" + value + "\n");
+        infoMsg("SENDING NEW I GAIN (" + value + ") TO RIGHT SIDE");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "dGainL":
+      infoMsg("SETTING A NEW D GAIN ON LEFT SIDE");
+      if (serialEnabled) {
+        serialPort.write("LD:" + value + "\n");
+        infoMsg("SENDING NEW D GAIN (" + value + ") TO LEFT SIDE");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "dGainR":
+      infoMsg("SETTING A NEW D GAIN ON RIGHT SIDE");
+      if (serialEnabled) {
+        serialPort.write("RD:" + value + "\n");
+        infoMsg("SENDING NEW D GAIN (" + value + ") TO RIGHT SIDE");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
     default:
       errorMsg("UNKNOW TEXTFIELD EVENT - " + parameter + " - " + value);
     }
@@ -464,6 +578,14 @@ void controlEvent(ControlEvent theEvent) {
     case "lgStepsR":
       infoMsg("CHANGING STATE OF VISIBILITY OF LINE STEPS MOTOR RIGHT");
       displayLine[1] = value;
+      break;
+    case "lgPWML":
+      infoMsg("CHANGING STATE OF VISIBILITY OF LINE PWM SPEED MOTOR LEFT");
+      displayLine[2] = value;
+      break;
+    case "lgPWMR":
+      infoMsg("CHANGING STATE OF VISIBILITY OF LINE PWM SPEED MOTOR RIGHT");
+      displayLine[3] = value;
       break;
     case "seEn":
       /* If value is to enable serial */

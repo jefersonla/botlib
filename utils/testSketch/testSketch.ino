@@ -35,8 +35,14 @@
 volatile int contaDireita = 0;
 volatile int contaEsquerda = 0;
 
-double kpDireita = 5;
-double kpEsquerda = 6;
+double kpEsquerda = 4.85;
+double kpDireita = 5.7;
+
+double kiEsquerda = 1.3;
+double kiDireita = 2;
+
+double kdEsquerda = 1.1;
+double kdDireita = 1.1;
 
 //volatile int velocidadeDireita = 120;
 //volatile int velocidadeEsquerda = 130;
@@ -59,13 +65,13 @@ volatile int girosDesejados = 150;
 
 //Define Variables we'll be connecting to
 double entradaEsquerda, entradaDireita;
-double objetivo = 150;
+volatile double objetivo = 100;
 
 //Specify the links and initial tuning parameters
-PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda, 0, 0, DIRECT);
+PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda, kiEsquerda, kdEsquerda, DIRECT);
 
 //Specify the links and initial tuning parameters
-PID motorDireito(&entradaDireita, &pwmDireita, &objetivo, kpDireita, 0, 0, DIRECT);
+PID motorDireito(&entradaDireita, &pwmDireita, &objetivo, kpDireita, kiDireita, kdDireita, DIRECT);
 
 void setup() {
   Serial.begin(115200);
@@ -127,6 +133,16 @@ void loop() {
             kpEsquerda = valor_float;
             motorEsquerdo.SetTunings(kpEsquerda, 0, 0);
             break;
+          case 'I':
+            valor_float = atof(&serialLido[3]);
+            kiEsquerda = valor_float;
+            motorEsquerdo.SetTunings(kpEsquerda, kiEsquerda, kdEsquerda);
+            break;
+          case 'D':
+            valor_float = atof(&serialLido[3]);
+            kdEsquerda = valor_float;
+            motorEsquerdo.SetTunings(kpEsquerda, kiEsquerda, kdEsquerda);
+            break;
           case 'S':
             valor_int = atoi(&serialLido[3]);
             velocidadeEsquerda = valor_int;
@@ -142,7 +158,17 @@ void loop() {
           case 'P':
             valor_float = atof(&serialLido[3]);
             kpDireita = valor_float;
-            motorDireito.SetTunings(kpDireita, 0, 0);
+            motorDireito.SetTunings(kpDireita, kiDireita, kdDireita);
+            break;
+          case 'I':
+            valor_float = atof(&serialLido[3]);
+            kiDireita = valor_float;
+            motorDireito.SetTunings(kpDireita, kiDireita, kdDireita);
+            break;
+          case 'D':
+            valor_float = atof(&serialLido[3]);
+            kdDireita = valor_float;
+            motorDireito.SetTunings(kpDireita, kiDireita, kdDireita);
             break;
           case 'S':
             valor_int = atoi(&serialLido[3]);
@@ -166,18 +192,24 @@ void ajustaMotor() {
     entradaEsquerda = contaEsquerda - anteriorEsquerda;
     motorEsquerdo.Compute();
     ACELERA_ESQUERDA(pwmEsquerda);
-    anteriorEsquerda = contaEsquerda;
 
     entradaDireita = contaDireita - anteriorDireita;
     motorDireito.Compute();
     ACELERA_DIREITA(pwmDireita);
-    anteriorDireita = contaDireita;
 
+    if (entradaEsquerda > entradaDireita) {
+      contaEsquerda -= (entradaEsquerda - entradaDireita);
+      contaDireita += (entradaEsquerda - entradaDireita);
+    }
+    else if (entradaDireita > entradaEsquerda) {
+      contaEsquerda += (entradaDireita - entradaEsquerda);
+      contaDireita -= (entradaDireita - entradaEsquerda);
+    }
+
+    anteriorDireita = contaDireita;
+    anteriorEsquerda = contaEsquerda;
   }
   if (contador == 10) {
-    contador = 0;
-    anteriorDireita = 0;
-    anteriorEsquerda = 0;
     Serial.print(contaEsquerda);
     Serial.print(",");
     Serial.print(contaDireita);
@@ -185,6 +217,9 @@ void ajustaMotor() {
     Serial.print(pwmEsquerda);
     Serial.print(",");
     Serial.println(pwmDireita);
+    contador = 0;
+    anteriorDireita = 0;
+    anteriorEsquerda = 0;
     contaDireita = 0;
     contaEsquerda = 0;
   }
