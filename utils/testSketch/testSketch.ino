@@ -52,17 +52,20 @@ volatile bool motoresAtivados = false;
 
 volatile int contador = 0;
 
+volatile int anteriorDireita = 0;
+volatile int anteriorEsquerda = 0;
+
 volatile int girosDesejados = 150;
 
 //Define Variables we'll be connecting to
 double entradaEsquerda, entradaDireita;
-double objetivo = 100;
+double objetivo = 50;
 
 //Specify the links and initial tuning parameters
-PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda,0,0, DIRECT);
+PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda, 0, 0, DIRECT);
 
 //Specify the links and initial tuning parameters
-PID motorDireito(&entradaDireita, &pwmDireita, &objetivo, kpDireita,0,0, DIRECT);
+PID motorDireito(&entradaDireita, &pwmDireita, &objetivo, kpDireita, 0, 0, DIRECT);
 
 void setup() {
   Serial.begin(115200);
@@ -82,14 +85,13 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(INTERROMPE_DIREITA), contadorDireita, CHANGE);
   attachInterrupt(digitalPinToInterrupt(INTERROMPE_ESQUERDA), contadorEsquerda, CHANGE);
 
+  motorDireito.SetOutputLimits(0, 1023);
+  motorEsquerdo.SetOutputLimits(0, 1023);
+  motorDireito.SetSampleTime(1000 / 10);
+  motorEsquerdo.SetSampleTime(1000 / 10);
+
   Timer1.initialize(1000000 / 10);
   Timer1.attachInterrupt(ajustaMotor);
-
-  motorEsquerdo.SetMode(AUTOMATIC);
-  motorDireito.SetMode(AUTOMATIC);
-  motorEsquerdo.SetOutputLimits(0, 1023); 
-  motorDireito.SetSampleTime(1000/10); 
-  motorEsquerdo.SetSampleTime(1000/10); 
 }
 
 void loop() {
@@ -102,14 +104,20 @@ void loop() {
     switch (serialLido[0]) {
       case 'I':
         motoresAtivados = true;
+        motorDireito.SetMode(AUTOMATIC);
+        motorEsquerdo.SetMode(AUTOMATIC);
         contaDireita = 0;
         contaEsquerda = 0;
+        anteriorDireita = 0;
+        anteriorEsquerda = 0;
         ACELERA_DIREITA(velocidadeDireita);
         ACELERA_ESQUERDA(velocidadeEsquerda);
         IR_PARA_FRENTE();
         break;
       case 'S':
         motoresAtivados = false;
+        motorDireito.SetMode(MANUAL);
+        motorEsquerdo.SetMode(MANUAL);
         FREIO();
         break;
       case 'L':
@@ -155,20 +163,28 @@ void loop() {
 
 void ajustaMotor() {
   if (motoresAtivados) {
-    //pwmEsquerda += kpEsquerda * (contaEsquerda - (girosDesejados / 10));
-    //entradaEsquerda = contaEsquerda;
-    //motorEsquerdo.Compute();
-    //ACELERA_ESQUERDA(pwmEsquerda);
-    //pwmDireita += kpDireita * (contaDireita - (girosDesejados / 10));
-    //entradaDireita = contaDireita;
-    //motorDireito.Compute();
-    //ACELERA_DIREITA(pwmDireita);
+    entradaEsquerda = contaEsquerda - anteriorEsquerda;
+    motorEsquerdo.Compute();
+    ACELERA_ESQUERDA(pwmEsquerda);
+    anteriorEsquerda = contaEsquerda;
+
+    entradaDireita = contaDireita - anteriorDireita;
+    motorDireito.Compute();
+    ACELERA_DIREITA(pwmDireita);
+    anteriorDireita = contaDireita;
+
   }
   if (contador == 10) {
     contador = 0;
+    anteriorDireita = 0;
+    anteriorEsquerda = 0;
     Serial.print(contaEsquerda);
     Serial.print(",");
-    Serial.println(contaDireita);
+    Serial.print(contaDireita);
+    Serial.print(",");
+    Serial.print(pwmEsquerda);
+    Serial.print(",");
+    Serial.println(pwmDireita);
     contaDireita = 0;
     contaEsquerda = 0;
   }

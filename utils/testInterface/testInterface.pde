@@ -315,7 +315,7 @@ void draw() {
   /* Read serial and update values if serial is enabled and available or debug serial is enabled */
   if ((serialEnabled && serialPort.available() > 0) || mockupSerial) {
     /* String with data received from serial */
-    String dataString = ",";
+    String dataString = "0,0";
 
     /* If mockup Serial was enabled just go ahead */
     if (mockupSerial) {
@@ -409,7 +409,7 @@ void controlEvent(ControlEvent theEvent) {
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }
-    break;
+      break;
     case "LeftSpeed":
       infoMsg("SETTING A NEW SPEED ON LEFT SIDE");
       if (serialEnabled) {
@@ -418,7 +418,7 @@ void controlEvent(ControlEvent theEvent) {
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }
-    break;
+      break;
     case "lgMaxY": 
       LineGraph.yMax = float(value);
       infoMsg("UPDATING MAX LIMIT OF LINE GRAPH");
