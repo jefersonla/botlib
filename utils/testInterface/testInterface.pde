@@ -453,9 +453,7 @@ void draw() {
 
     /* Update lines with content received from Serial Port if it is valid */
     if (dataReceived.length >= numberOfLines) {
-
-      println(dataString + " - " + (dataReceived[0].equals("P")));
-      
+   
       /* Messages started with X represent parameters returned */
       if (dataReceived[0].equals("P")) {
         infoMsg("PARAMS RECEIVED");
