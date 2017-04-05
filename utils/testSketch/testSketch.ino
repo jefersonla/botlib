@@ -56,6 +56,8 @@ double pwmEsquerda = 0;
 
 volatile bool motoresAtivados = false;
 
+volatile bool pidAtivado = true;
+
 volatile int contador = 0;
 
 volatile int anteriorDireita = 0;
@@ -73,6 +75,8 @@ PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda, kiEsque
 //Specify the links and initial tuning parameters
 PID motorDireito(&entradaDireita, &pwmDireita, &objetivo, kpDireita, kiDireita, kdDireita, DIRECT);
 
+#define MUTEX_PRINT 14
+
 void setup() {
   Serial.begin(115200);
 
@@ -84,6 +88,7 @@ void setup() {
   pinMode(DIRECAO_DIREITA_2, OUTPUT);
   pinMode(DIRECAO_ESQUERDA_1, OUTPUT);
   pinMode(DIRECAO_ESQUERDA_2, OUTPUT);
+  pinMode(MUTEX_PRINT, OUTPUT);
 
   pinMode(INTERROMPE_DIREITA, INPUT_PULLUP);
   pinMode(INTERROMPE_ESQUERDA, INPUT_PULLUP);
@@ -180,6 +185,39 @@ void loop() {
             Serial.println(serialLido[1]);
         }
         break;
+      case 'P':
+        switch (serialLido[1]) {
+          case 'E':
+            pidAtivado = true;
+            break;
+          case 'D':
+            pidAtivado = false;
+            break;
+          default:
+            Serial.print("CODE UNRECOGNIZED 2 ");
+            Serial.println(serialLido[1]);
+        }
+        break;
+      case 'G':
+        digitalWrite(MUTEX_PRINT, HIGH);
+        Serial.print("P,A,X,X,");
+        Serial.print(kpEsquerda);
+        Serial.print(",");
+        Serial.print(kiEsquerda);
+        Serial.print(",");
+        Serial.print(kdEsquerda);
+        Serial.print(",");
+        Serial.print(kpDireita);
+        Serial.print(",");
+        Serial.print(kiDireita);
+        Serial.print(",");
+        Serial.print(kdDireita);
+        Serial.print(",");
+        Serial.print(pwmEsquerda);
+        Serial.print(",");
+        Serial.println(pwmDireita);
+        digitalWrite(MUTEX_PRINT, LOW);
+        break;
       default:
         Serial.print("CODE UNRECOGNIZED 1 ");
         Serial.println(serialLido[0]);
@@ -188,7 +226,7 @@ void loop() {
 }
 
 void ajustaMotor() {
-  if (motoresAtivados) {
+  if (motoresAtivados && pidAtivado) {
     entradaEsquerda = contaEsquerda - anteriorEsquerda;
     motorEsquerdo.Compute();
     ACELERA_ESQUERDA(pwmEsquerda);
@@ -209,7 +247,7 @@ void ajustaMotor() {
     anteriorDireita = contaDireita;
     anteriorEsquerda = contaEsquerda;
   }
-  if (contador == 10) {
+  if (contador == 10 && !digitalRead(MUTEX_PRINT)) {
     Serial.print(contaEsquerda);
     Serial.print(",");
     Serial.print(contaDireita);

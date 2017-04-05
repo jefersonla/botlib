@@ -56,6 +56,9 @@ final int GRAPH_PWM_RIGHT = 3;
 /* Buttons */
 final int START_MOTOR_BUTTON = 1;
 final int STOP_MOTOR_BUTTON = 2;
+final int ENABLE_PID_BUTTON = 3;
+final int DISABLE_PID_BUTTON = 4;
+final int GET_PARAMS_BUTTON = 5;
 
 /* Serial Speed */
 final int SERIAL_SPEED = 115200;
@@ -63,6 +66,9 @@ final int SERIAL_SPEED = 115200;
 /* Messages to send */
 final String START_MOTOR_MSG = "I\n";
 final String STOP_MOTOR_MSG = "S\n";
+final String ENABLE_PID_MSG = "PE\n";
+final String DISABLE_PID_MSG = "PD\n";
+final String GET_PARAMS_MSG = "G\n";
 
 /* P5 Controller */
 ControlP5 cp5;
@@ -308,12 +314,12 @@ void setup() {
     .setColor(0);
   cp5.addToggle("lgPWML")
     .setPosition(gainXPos1, gainYPos1)
-    .setValue(true)
+    .setValue(false)
     .setMode(ControlP5.SWITCH)
     .setColorActive(graphColors[2]);
   cp5.addToggle("lgPWMR")
     .setPosition(gainXPos1, gainYPos1 + 30)
-    .setValue(true)
+    .setValue(false)
     .setMode(ControlP5.SWITCH)
     .setColorActive(graphColors[3]);
   cp5.addTextfield("LeftSpeed")
@@ -373,6 +379,27 @@ void setup() {
     .updateSize()
     .setSize(100, 20);
 
+  /* Enable PID */
+  cp5.addButton("Enable PID")
+    .setValue(ENABLE_PID_BUTTON)
+    .setPosition(toolbarX, toolbarY - 30)
+    .updateSize()
+    .setSize(100, 20);
+
+  /* Disable PID */
+  cp5.addButton("Disable PID")
+    .setValue(DISABLE_PID_BUTTON)
+    .setPosition(toolbarX + 110, toolbarY - 30)
+    .updateSize()
+    .setSize(100, 20);
+
+  /* Get Parameters */
+  cp5.addButton("Get Params")
+    .setValue(GET_PARAMS_BUTTON)
+    .setPosition(toolbarX - 380, toolbarY + 400)
+    .updateSize()
+    .setSize(100, 20);
+
   /* Start with serial disabled */
   serialEnabled = false;
   serialPort = null;
@@ -394,6 +421,11 @@ void draw() {
   if ((serialEnabled && serialPort.available() > 0) || mockupSerial) {
     /* String with data received from serial */
     String dataString = "0,0";
+
+    /* Clear buffer array */
+    for (int i = 0; i < serialBuffer.length; i++) {
+      serialBuffer[i] = 0;
+    }
 
     /* If mockup Serial was enabled just go ahead */
     if (mockupSerial) {
@@ -419,22 +451,57 @@ void draw() {
     /* Split string received  */
     String[] dataReceived = split(dataString, ',');
 
-    /* Update lines with content received from Serial Port */
-    for (int i = 0; i < numberOfLines; i++) {
-      /* Shift content in one position */
-      for (int j = 0; j < timeInterval - 1; j++) {
-        lineGraphValues[i][j] = lineGraphValues[i][j + 1];
-      }
+    /* Update lines with content received from Serial Port if it is valid */
+    if (dataReceived.length >= numberOfLines) {
 
-      /* Add value received in each line */
-      if (dataReceived.length >= numberOfLines) {
-        lineGraphValues[i][timeInterval - 1] = float(dataReceived[i]);
+      println(dataString + " - " + (dataReceived[0].equals("P")));
+      
+      /* Messages started with X represent parameters returned */
+      if (dataReceived[0].equals("P")) {
+        infoMsg("PARAMS RECEIVED");
+
+        /* Second parameter represent which information came */
+        switch(dataReceived[1]) {
+        case "A":
+          /* Populate interface with all params received */
+          infoMsg("ALL PARAMS RECEIVED");
+          cp5.get(Textfield.class, "pGainL")
+            .setValue(float(dataReceived[4]));
+          cp5.get(Textfield.class, "iGainL")
+            .setValue(float(dataReceived[5]));
+          cp5.get(Textfield.class, "dGainL")
+            .setValue(float(dataReceived[6]));
+          cp5.get(Textfield.class, "pGainR")
+            .setValue(float(dataReceived[7]));
+          cp5.get(Textfield.class, "iGainR")
+            .setValue(float(dataReceived[8]));
+          cp5.get(Textfield.class, "dGainR")
+            .setValue(float(dataReceived[9]));
+          cp5.get(Textfield.class, "LeftSpeed")
+            .setValue(int(dataReceived[10]));
+          cp5.get(Textfield.class, "RightSpeed")
+            .setValue(int(dataReceived[11]));
+          break;
+        default:
+          errorMsg("INVALID LIST OF PARAMS RECEIVED. CODE - " + dataReceived[1]);
+        }
       }
-      /* Otherwise add a 0 */
+      /* Common table data */
       else {
-        errorMsg("INVALID DATA RECEIVED");
-        lineGraphValues[i][timeInterval - 1] = 0;
+        for (int i = 0; i < numberOfLines; i++) {
+          /* Shift content in one position */
+          for (int j = 0; j < timeInterval - 1; j++) {
+            lineGraphValues[i][j] = lineGraphValues[i][j + 1];
+          }
+
+          /* Add value received in each line */
+          lineGraphValues[i][timeInterval - 1] = float(dataReceived[i]);
+        }
       }
+    }
+    /* If data don't have the enough number of params */
+    else {
+      errorMsg("INVALID DATA RECEIVED");
     }
   }
 
@@ -632,6 +699,36 @@ void controlEvent(ControlEvent theEvent) {
       if (serialEnabled) {
         serialPort.write(STOP_MOTOR_MSG);
         infoMsg("SENDING STOP MESSAGE TO ROBOT");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "Enable PID":
+      /* If serial is enabled send the enable message */
+      if (serialEnabled) {
+        serialPort.write(ENABLE_PID_MSG);
+        infoMsg("SENDING ENABLE PID MESSAGE TO ROBOT");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "Disable PID":
+      /* If serial is enabled send the stop message */
+      if (serialEnabled) {
+        serialPort.write(DISABLE_PID_MSG);
+        infoMsg("SENDING DISABLE PID MESSAGE TO ROBOT");
+      } else {
+        warningMsg("SERIAL NOT CONECTED");
+      }
+      break;
+    case "Get Params":
+      /* If serial is enabled send the stop message */
+      if (serialEnabled) {
+        serialPort.write(GET_PARAMS_MSG);
+        infoMsg("SENDING GET PARAMS TO ROBOT");
+
+        /* Wait for message received */
+        infoMsg("WAITING FOR PARAMS RESPONSE");
       } else {
         warningMsg("SERIAL NOT CONECTED");
       }
