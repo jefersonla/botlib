@@ -69,13 +69,20 @@ volatile int girosDesejados = 150;
 double entradaEsquerda, entradaDireita;
 volatile double objetivo = 100;
 
+#define USE_PID
+
+#ifdef USE_PID
 //Specify the links and initial tuning parameters
 PID motorEsquerdo(&entradaEsquerda, &pwmEsquerda, &objetivo, kpEsquerda, kiEsquerda, kdEsquerda, DIRECT);
 
 //Specify the links and initial tuning parameters
 PID motorDireito(&entradaDireita, &pwmDireita, &objetivo, kpDireita, kiDireita, kdDireita, DIRECT);
+#endif
 
 #define MUTEX_PRINT 14
+#define DIVISOES 5
+#define META (80 / DIVISOES)
+
 
 void setup() {
   Serial.begin(115200);
@@ -96,12 +103,14 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(INTERROMPE_DIREITA), contadorDireita, CHANGE);
   attachInterrupt(digitalPinToInterrupt(INTERROMPE_ESQUERDA), contadorEsquerda, CHANGE);
 
+#ifdef USE_PID
   motorDireito.SetOutputLimits(0, 1023);
   motorEsquerdo.SetOutputLimits(0, 1023);
-  motorDireito.SetSampleTime(1000 / 10);
-  motorEsquerdo.SetSampleTime(1000 / 10);
+  motorDireito.SetSampleTime(1000 / DIVISOES);
+  motorEsquerdo.SetSampleTime(1000 / DIVISOES);
+#endif
 
-  Timer1.initialize(1000000 / 10);
+  Timer1.initialize(1000000 / DIVISOES);
   Timer1.attachInterrupt(ajustaMotor);
 }
 
@@ -115,8 +124,10 @@ void loop() {
     switch (serialLido[0]) {
       case 'I':
         motoresAtivados = true;
+#ifdef USE_PID
         motorDireito.SetMode(AUTOMATIC);
         motorEsquerdo.SetMode(AUTOMATIC);
+#endif
         contaDireita = 0;
         contaEsquerda = 0;
         anteriorDireita = 0;
@@ -127,8 +138,10 @@ void loop() {
         break;
       case 'S':
         motoresAtivados = false;
+#ifdef USE_PID
         motorDireito.SetMode(MANUAL);
         motorEsquerdo.SetMode(MANUAL);
+#endif
         FREIO();
         break;
       case 'L':
@@ -136,17 +149,23 @@ void loop() {
           case 'P':
             valor_float = atof(&serialLido[3]);
             kpEsquerda = valor_float;
-            motorEsquerdo.SetTunings(kpEsquerda, 0, 0);
+#ifdef USE_PID
+            motorEsquerdo.SetTunings(kpEsquerda, kiEsquerda, kdEsquerda);
+#endif
             break;
           case 'I':
             valor_float = atof(&serialLido[3]);
             kiEsquerda = valor_float;
+#ifdef USE_PID
             motorEsquerdo.SetTunings(kpEsquerda, kiEsquerda, kdEsquerda);
+#endif
             break;
           case 'D':
             valor_float = atof(&serialLido[3]);
             kdEsquerda = valor_float;
+#ifdef USE_PID
             motorEsquerdo.SetTunings(kpEsquerda, kiEsquerda, kdEsquerda);
+#endif
             break;
           case 'S':
             valor_int = atoi(&serialLido[3]);
@@ -163,17 +182,23 @@ void loop() {
           case 'P':
             valor_float = atof(&serialLido[3]);
             kpDireita = valor_float;
+#ifdef USE_PID
             motorDireito.SetTunings(kpDireita, kiDireita, kdDireita);
+#endif
             break;
           case 'I':
             valor_float = atof(&serialLido[3]);
             kiDireita = valor_float;
+#ifdef USE_PID
             motorDireito.SetTunings(kpDireita, kiDireita, kdDireita);
+#endif
             break;
           case 'D':
             valor_float = atof(&serialLido[3]);
             kdDireita = valor_float;
+#ifdef USE_PID
             motorDireito.SetTunings(kpDireita, kiDireita, kdDireita);
+#endif
             break;
           case 'S':
             valor_int = atoi(&serialLido[3]);
@@ -228,11 +253,21 @@ void loop() {
 void ajustaMotor() {
   if (motoresAtivados && pidAtivado) {
     entradaEsquerda = contaEsquerda - anteriorEsquerda;
+#ifdef USE_PID
     motorEsquerdo.Compute();
+#else
+    pwmEsquerda += kpEsquerda * abs(entradaEsquerda - META) * ((entradaEsquerda > META) ? -1 : 1);
+    pwmEsquerda = (pwmEsquerda < 0 ? 0 : ((pwmEsquerda > 1023) ? 1023 : pwmDireita);
+#endif
     ACELERA_ESQUERDA(pwmEsquerda);
 
     entradaDireita = contaDireita - anteriorDireita;
+#ifdef USE_PID
     motorDireito.Compute();
+#else
+    pwmDireita += kpDireita * abs(entradaDireita - META) * ((entradaDireita > META) ? -1 : 1);
+    pwmDireita = (pwmDireita < 0 ? 0 : ((pwmDireita > 1023) ? 1023 : pwmDireita);
+#endif
     ACELERA_DIREITA(pwmDireita);
 
     if (entradaEsquerda > entradaDireita) {
@@ -247,7 +282,7 @@ void ajustaMotor() {
     anteriorDireita = contaDireita;
     anteriorEsquerda = contaEsquerda;
   }
-  if (contador == 10 && !digitalRead(MUTEX_PRINT)) {
+  if (contador == DIVISOES && !digitalRead(MUTEX_PRINT)) {
     Serial.print(contaEsquerda);
     Serial.print(",");
     Serial.print(contaDireita);
