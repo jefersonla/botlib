@@ -1,11 +1,3 @@
-
-/**********************************************
- *        Writed by @AndressAndrade           *
- *                                            *
- *       A-Star Robot for Arduino 2017        *
- *   This code uses A* to make a robot able   *
- *        to get out of a labyrinth           *
- *********************************************/
 /*Libraries*/
 //#include <Ultrasonic.h>
 
