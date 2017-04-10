@@ -65,11 +65,10 @@ volatile int anteriorEsquerda = 0;
 
 volatile int girosDesejados = 150;
 
-//Define Variables we'll be connecting to
 double entradaEsquerda, entradaDireita;
 volatile double objetivo = 100;
 
-#define USE_PID
+//#define USE_PID
 
 #ifdef USE_PID
 //Specify the links and initial tuning parameters
@@ -257,7 +256,7 @@ void ajustaMotor() {
     motorEsquerdo.Compute();
 #else
     pwmEsquerda += kpEsquerda * abs(entradaEsquerda - META) * ((entradaEsquerda > META) ? -1 : 1);
-    pwmEsquerda = (pwmEsquerda < 0 ? 0 : ((pwmEsquerda > 1023) ? 1023 : pwmDireita);
+    pwmEsquerda = (pwmEsquerda < 0 ? 0 : ((pwmEsquerda > 1023) ? 1023 : pwmEsquerda));
 #endif
     ACELERA_ESQUERDA(pwmEsquerda);
 
@@ -266,7 +265,7 @@ void ajustaMotor() {
     motorDireito.Compute();
 #else
     pwmDireita += kpDireita * abs(entradaDireita - META) * ((entradaDireita > META) ? -1 : 1);
-    pwmDireita = (pwmDireita < 0 ? 0 : ((pwmDireita > 1023) ? 1023 : pwmDireita);
+    pwmDireita = (pwmDireita < 0 ? 0 : ((pwmDireita > 1023) ? 1023 : pwmDireita));
 #endif
     ACELERA_DIREITA(pwmDireita);
 
