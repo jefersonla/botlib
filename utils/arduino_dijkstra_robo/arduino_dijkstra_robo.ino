@@ -397,7 +397,16 @@ void moverAdjacente(int dir_i, int dir_j, bool mover) {
 /* Usa os sensores para detectar um obstaculo */
 bool checaObstaculo() {
   Serial.println(F("[%] Checando obstaculo"));
-  return (ultrasonico.distanceRead() < TAMANHO_GRID_MM);
+  float cmMsec;
+  long microsec = ultrasonic.timing();
+  cmMsec = ultrasonic.convert(microsec, Ultrasonic::CM);
+  //return (ultrasonico.distanceRead() < TAMANHO_GRID_MM);
+  if(cmMsec < 34){
+    return true;
+  }
+  else{
+    return false;
+  }
 }
 
 /* Verifica obstaculos */
