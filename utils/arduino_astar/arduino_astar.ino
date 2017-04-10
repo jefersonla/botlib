@@ -85,7 +85,7 @@ void setup() {
   /* Setando todo o grid para 1000, isso irá auxiliar no momento da execução do A* */
   for (i = 0; i < m; i++) {
     for (j = 0; j < m; j++) {
-      grid[i][j] = INT_MAX;
+      grid[i][j] = 1000;
     }
   }
 
