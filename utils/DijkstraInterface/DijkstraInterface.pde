@@ -70,7 +70,7 @@ void setup() {
   /* Create Interface */
   size(640, 480);
   noStroke();
-  surface.setTitle("Robozino - Djikstra Interface");
+  surface.setTitle("Robozino - Dijkstra Interface");
 
   f = createFont("Arial", 16);
 
@@ -79,7 +79,9 @@ void setup() {
    Open whatever port is the one you're using.*/
 
   /* Change the 0 to a 1 or 2 etc. to match your port */
+  println((Object[])Serial.list());
   String portName = Serial.list()[0]; 
+  
   myPort = new Serial(this, portName, SERIAL_SPEED);
 
   /* Initialize all the grid as unvisited */
