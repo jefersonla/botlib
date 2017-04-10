@@ -5,8 +5,8 @@
 #include <limits.h>
 
 /* Tamanho do grid */
-#define NUM_LINHAS        4
-#define NUM_COLUNAS       5
+#define NUM_LINHAS        2
+#define NUM_COLUNAS       2
 const int total_vertices = (NUM_LINHAS * NUM_COLUNAS);
 
 /* Vertice Atual */
@@ -23,12 +23,12 @@ const int total_vertices = (NUM_LINHAS * NUM_COLUNAS);
 #define verticeVerticalAbaixo(I, J)     (verticeHorizontal(I, J, 1)
 
 /* Vertice de inicio ou origem */
-#define INICIO_LINHA    3
-#define INICIO_COLUNA   3
+#define INICIO_LINHA    1
+#define INICIO_COLUNA   1
 #define VERTICE_INICIO  (verticeAtual(INICIO_LINHA, INICIO_COLUNA))
 
 /* Vertice de fim ou objetivo */
-#define FINAL_LINHA     1
+#define FINAL_LINHA     0
 #define FINAL_COLUNA    0
 #define VERTICE_FINAL   (verticeAtual(FINAL_LINHA, FINAL_COLUNA))
 
@@ -67,7 +67,7 @@ const int total_vertices = (NUM_LINHAS * NUM_COLUNAS);
 #define ULTRASSONICO_ECHO    19
 
 /* Define tamanho de cada celula quadrada do GRID */
-#define TAMANHO_GRID_MM 240
+#define TAMANHO_GRID_MM 1050
 
 /* Constantes do robo */
 #define LARGURA_ROBO_MM     120
@@ -150,11 +150,9 @@ int mapa_test[][5] = {
 };
 
 /* Mapa Default */
-int mapa_global[][5] = {
-  { OBJ, DES, DES, DES, DES },
-  { DES, DES, DES, DES, DES },
-  { DES, DES, DES, DES, DES },
-  { DES, DES, DES, ORI, DES }
+int mapa_global[][2] = {
+  {OBJ, DES},
+  {DES, ORI},
 };
 
 /* Move o robo em mm se positivo para frente negativo para trás */
@@ -174,17 +172,32 @@ void moverRobo(int distancia_mm_esquerda, int distancia_mm_direita) {
   }
 }
 
+#define PASSOS_ROTACAO_EXATA_90   2400
+
 /* Rotaciona robo em uma quantidade especifica de graus */
 void rotacionaRobo(int graus) {
   /* Distancia a ser percorrida */
-  int distancia_mm = ceil(comprimentoArco(raio_eixos_motor, abs(graus)));
+  int distancia_passos = (graus / 90) * PASSOS_ROTACAO_EXATA_90;
 
   /* Se maior que 0 movimento horario caso contrário anti horario */
   if (graus > 0) {
-    moverRobo(distancia_mm, -distancia_mm);
+    motor_esquerda.move(distancia_passos);
+    motor_direita.move(-distancia_passos);
   }
   else {
-    moverRobo(-distancia_mm, distancia_mm);
+    /* Configura o movimento */
+    motor_esquerda.move(-distancia_passos);
+    motor_direita.move(distancia_passos);
+  }
+
+  /* Configura a velocidade */
+  motor_esquerda.setSpeed(VELOCIDADE_MOTOR_PASSOS_SEGUNDO);
+  motor_direita.setSpeed(VELOCIDADE_MOTOR_PASSOS_SEGUNDO);
+
+  /* Enquanto não alcançar a distância desejada */
+  while (motor_esquerda.distanceToGo() != 0 && motor_direita.distanceToGo() != 0) {
+    motor_esquerda.runSpeedToPosition();
+    motor_direita.runSpeedToPosition();
   }
 }
 
@@ -397,16 +410,9 @@ void moverAdjacente(int dir_i, int dir_j, bool mover) {
 /* Usa os sensores para detectar um obstaculo */
 bool checaObstaculo() {
   Serial.println(F("[%] Checando obstaculo"));
-  float cmMsec;
-  long microsec = ultrasonic.timing();
-  cmMsec = ultrasonic.convert(microsec, Ultrasonic::CM);
-  //return (ultrasonico.distanceRead() < TAMANHO_GRID_MM);
-  if(cmMsec < 34){
-    return true;
-  }
-  else{
-    return false;
-  }
+  Serial.println(TAMANHO_GRID_MM + TAMANHO_GRID_MM / 2);
+  Serial.println(ultrasonico.distanceRead() * 10);
+  return ((ultrasonico.distanceRead() * 10) <= (TAMANHO_GRID_MM + TAMANHO_GRID_MM / 2) );
 }
 
 /* Verifica obstaculos */
@@ -430,7 +436,7 @@ bool verificaObstaculos(int u, int v, int mapa[][NUM_COLUNAS]) {
 
   /* Após termos rotacionado o robo iremos usar o sensor para verificar a posição */
   bool temObstaculo = checaObstaculo();
-  mapa[vertices[v].i][vertices[v].j] = ((checaObstaculo()) ? BAR : LIV );
+  mapa[vertices[v].i][vertices[v].j] = ((temObstaculo) ? BAR : LIV );
   return temObstaculo;
 }
 
@@ -606,6 +612,7 @@ void dijkstra(int mapa[][NUM_COLUNAS]) {
 
 void setup() {
   /* Inicia a comunicação */
+  delay(2000);
   Serial.begin(115200);
 
   /* Inicializando Dijkstra */

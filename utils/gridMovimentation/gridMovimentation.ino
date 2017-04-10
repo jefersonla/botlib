@@ -34,7 +34,7 @@ const int num_celulas = (NUM_LINHAS * NUM_COLUNAS);
 #define DIAMETRO_RODAS_MM 70
 #define LARGURA_RODAS_MM  25
 const int raio_rodas = DIAMETRO_RODAS_MM / 2;
-const int raio_eixos_motor = (COMPRIMENTO_EIXO_RODAS - 5) / 2;
+const int raio_eixos_motor = (COMPRIMENTO_EIXO_RODAS - 22) / 2;
 
 /* Comprimento do movimento */
 #define comprimentoArco(ANGULO, RAIO) ((ANGULO > 180) ? ((ANGULO * PI * 2 * RAIO) / 360) : ((ANGULO * PI * RAIO) / 180))
@@ -67,6 +67,7 @@ void moverRobo(int distancia_mm_esquerda, int distancia_mm_direita) {
   /* Configura o movimento */
   motor_esquerda.move(ceil(distancia_mm_esquerda) / step_length);
   motor_direita.move(ceil(distancia_mm_direita) / step_length);
+  Serial.println(ceil((distancia_mm_direita) / step_length));
 
   /* Configura a velocidade */
   motor_esquerda.setSpeed(VELOCIDADE_MOTOR_PASSOS_SEGUNDO);
@@ -79,17 +80,32 @@ void moverRobo(int distancia_mm_esquerda, int distancia_mm_direita) {
   }
 }
 
+#define PASSOS_ROTACAO_EXATA_90   2400
+
 /* Rotaciona robo em uma quantidade especifica de graus */
 void rotacionaRobo(int graus) {
   /* Distancia a ser percorrida */
-  int distancia_mm = ceil(comprimentoArco(raio_eixos_motor, abs(graus)));
+  int distancia_passos = (graus / 90) * PASSOS_ROTACAO_EXATA_90;
 
   /* Se maior que 0 movimento horario caso contrário anti horario */
   if (graus > 0) {
-    moverRobo(distancia_mm, -distancia_mm);
+    motor_esquerda.move(distancia_passos);
+    motor_direita.move(-distancia_passos);
   }
   else {
-    moverRobo(-distancia_mm, distancia_mm);
+    /* Configura o movimento */
+    motor_esquerda.move(-distancia_passos);
+    motor_direita.move(distancia_passos);
+  }
+
+  /* Configura a velocidade */
+  motor_esquerda.setSpeed(VELOCIDADE_MOTOR_PASSOS_SEGUNDO);
+  motor_direita.setSpeed(VELOCIDADE_MOTOR_PASSOS_SEGUNDO);
+
+  /* Enquanto não alcançar a distância desejada */
+  while (motor_esquerda.distanceToGo() != 0 && motor_direita.distanceToGo() != 0) {
+    motor_esquerda.runSpeedToPosition();
+    motor_direita.runSpeedToPosition();
   }
 }
 
@@ -111,13 +127,13 @@ void setup() {
 
 void loop() {
 
-  delay(2000);
-  moverRobo(340, 340);
-  delay(2000);
-  rotacionaRobo(-90);
-  delay(2000);
-  moverRobo(340, 340);
-  delay(2000);
+  delay(5000);
+  rotacionaRobo(90);
+  delay(5000);
+  rotacionaRobo(90);
+  delay(5000);
+  rotacionaRobo(90);
+  delay(5000);
   rotacionaRobo(90);
   delay(2000);
 }
