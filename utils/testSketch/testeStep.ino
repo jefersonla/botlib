@@ -40,6 +40,7 @@ void setup() {
 }
 
 void loop() {
+  GIRAR_DIREITA()
   stepper.run();
 }
 
