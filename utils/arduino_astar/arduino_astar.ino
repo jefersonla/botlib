@@ -1,6 +1,7 @@
 
 /*Bilbiotecas*/
 #include <Ultrasonic.h>
+#include <limits.h>
 
 /* Tamanho do grid */
 #define NUM_LINHAS        3
@@ -31,7 +32,6 @@ int ActualCol;
 /* Define próxima posição */
 int NextRow;
 int NextCol;
-
 
 /* Define posição inicial */
 int StartRow = 3;
@@ -72,6 +72,7 @@ void intervencao(){
 void setup() {
    Serial.begin(115200);
    Serial.println("Estou no Setup!");
+   
    /* Inicializa minha matriz com as distâncias de Manhattan, função heurística */
    heuristicFunction();
    ActualRow = StartRow;
@@ -84,9 +85,10 @@ void setup() {
    /* Setando todo o grid para 1000, isso irá auxiliar no momento da execução do A* */
    for(i = 0; i < m; i++){
       for(j = 0; j < m; j++){
-         grid[i][j] = 1000;
+         grid[i][j] = INT_MAX;
       }
    }
+   
    /* Local das funções de ajustes de rodas */
    //calibratemotors()
 }
