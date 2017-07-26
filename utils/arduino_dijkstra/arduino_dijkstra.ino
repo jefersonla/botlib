@@ -43,10 +43,15 @@ const int total_vertices = (NUM_LINHAS * NUM_COLUNAS);
 #define APONTADO_OESTE  3
 
 /* Posições do mapa */
+/* Desconhecido */
 #define DES 0
+/* Objetivo */
 #define OBJ 1
+/* Livre */
 #define LIV 2
+/* Barreira */
 #define BAR 3
+/* Origem */
 #define ORI 4
 
 /* Estruturas de dados */
